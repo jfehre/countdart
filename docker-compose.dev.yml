@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  dev:
+    build:
+      context: .
+      target: dev
+    volumes:
+      - ./:/app
+    # Overrides default command so things don't shut down after the process ends.
+    command: /bin/bash -c "while sleep 1000; do :; done"

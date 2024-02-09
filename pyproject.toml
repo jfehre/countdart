@@ -1,0 +1,81 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "countdart"
+authors = [
+    { name = "Jonas Fehrenbach", email = "jonas.fehrenbach@gmail.com" },
+]
+description = ""
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Environment :: Web Environment",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+dependencies = [
+    "numpy",
+    "pydantic",
+    "typer",
+    "docstring-parser",
+    "uvicorn",
+    "fastapi",
+]
+dynamic = ["version"]
+
+[project.urls]
+homepage = "https://github.com/jfehre"
+
+[project.optional-dependencies]
+test = []
+dev = [
+    "pre-commit",
+    "black",
+    "isort",
+    "flake8",
+    "interrogate",
+    "pip-tools",
+]
+plot = ["matplotlib"]
+
+
+[tool.black]
+target-version = ['py38']
+
+[tool.pylint."messages control"]
+ignore = ["setup.py", "__init__.py"]
+disable = "all"
+enable = [
+    "empty-docstring",
+    "missing-class-docstring",
+    "missing-function-docstring",
+    "missing-module-docstring",
+]
+
+[tool.isort]
+profile = "black"
+known_first_party = ["countdart"]
+
+[tool.interrogate]
+ignore-private = true
+ignore-init-method = true
+ignore-magic = true
+ignore-nested-functions = true
+exclude = ["tests"]
+
+[tool.coverage.run]
+omit = ['*/tests/*']
+
+[tool.mypy]
+packages = "countdart"
+
+[tool.setuptools.dynamic]
+version = { attr = "countdart.VERSION" }
+
+[tool.setuptools]
+py-modules = []
