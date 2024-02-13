@@ -25,6 +25,9 @@ dependencies = [
     "docstring-parser",
     "uvicorn",
     "fastapi",
+    "vidgear",
+    "opencv-python",
+    "celery[sqlalchemy]"
 ]
 dynamic = ["version"]
 

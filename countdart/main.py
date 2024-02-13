@@ -1,15 +1,19 @@
+"""
+Main process. This file is the entry point to start the backend.
+"""
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from countdart.api import router
 
+
 def create_app() -> FastAPI:
     """Create the FastAPI app and include the router."""
 
-
     app = FastAPI(
         title="Count Dart",
-        )
+    )
     origins = ["*"]
 
     app.add_middleware(
@@ -29,10 +33,8 @@ def create_app() -> FastAPI:
     return app
 
 
-
 if __name__ == "__main__":
     import uvicorn
-
 
     uvicorn.run(
         "countdart.main:create_app",

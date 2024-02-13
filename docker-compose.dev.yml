@@ -9,3 +9,10 @@ services:
       - ./:/app
     # Overrides default command so things don't shut down after the process ends.
     command: /bin/bash -c "while sleep 1000; do :; done"
+  celeryworker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./:/app
+    command: celery -A countdart.celery_app.celery_app worker --loglevel=INFO

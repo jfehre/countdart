@@ -1,3 +1,6 @@
+"""
+FastAPI Routes and endpoints
+"""
 from fastapi import APIRouter
 
 from .test import router as test_router

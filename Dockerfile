@@ -8,8 +8,12 @@ ENV TZ=Europe/Berlin
 RUN echo $TZ > /etc/timezone
 RUN apt-get update && apt-get install -y --no-install-recommends \
     wget software-properties-common git tzdata \
+    locales locales-all \
     graphviz \
     vim
+
+# add packages for libgl which is used by opencv
+RUN apt-get update && apt-get install -y ffmpeg libsm6 libxext6
 
 #create a non root user to access the container
 RUN adduser --disabled-password --gecos '' --uid 1000 user
@@ -32,6 +36,9 @@ RUN --mount=type=cache,target=/root/.cache/pip,mode=0755 \
     python3 -m pip install \
     -r /dev-requirements.txt && \
     rm /dev-requirements.txt
+
+COPY . .
+RUN python3 -m pip install -e .
 
 # Allow user write access to virtual env, so we can
 # install packages for testing.

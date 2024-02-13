@@ -7,6 +7,8 @@
 	"service": "dev",
     "workspaceFolder": "/app/",
     "updateRemoteUserUID": true,
+	// use privileged to get access to usb devices (this may not be very secure)
+	"privileged": true,
 
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
@@ -24,18 +26,20 @@
         "vscode": {
             "settings": {},
             "extensions": [
-                "ms-python.isort",
-                "ms-python.python",
-                "ms-python.black-formatter",
-                "charliermarsh.ruff",
-                "yzhang.markdown-all-in-one",
-                "tamasfe.even-better-toml",
-                "ryanluker.vscode-coverage-gutters",
-                "matangover.mypy"
-            ]
+				"ms-python.isort",
+				"ms-python.python",
+				"ms-python.black-formatter",
+				"charliermarsh.ruff",
+				"yzhang.markdown-all-in-one",
+				"tamasfe.even-better-toml",
+				"ryanluker.vscode-coverage-gutters",
+				"matangover.mypy",
+				"njpwerner.autodocstring"
+			]
         }
     },
 
 	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
-	// "remoteUser": "root"
+	// need to be root for camera access
+	"remoteUser": "root"
 }

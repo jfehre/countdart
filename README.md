@@ -1,6 +1,6 @@
 # Count Dart
 
-Automatic dart scoring system. 
+Automatic dart scoring system.
 
 Still under development...
 
