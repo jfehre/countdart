@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from countdart.api import router
+from countdart.database import get_session, init_db
 
 
 def create_app() -> FastAPI:
@@ -15,6 +16,8 @@ def create_app() -> FastAPI:
         title="Count Dart",
     )
     origins = ["*"]
+
+    init_db(get_session())
 
     app.add_middleware(
         CORSMiddleware,

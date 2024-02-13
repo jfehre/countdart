@@ -156,6 +156,10 @@ prompt-toolkit==3.0.43
     # via
     #   -c requirements/base.txt
     #   click-repl
+psycopg2==2.9.9
+    # via
+    #   -c requirements/base.txt
+    #   countdart (pyproject.toml)
 py==1.11.0
     # via interrogate
 pycodestyle==2.11.1
@@ -165,6 +169,7 @@ pydantic==2.5.3
     #   -c requirements/base.txt
     #   countdart (pyproject.toml)
     #   fastapi
+    #   sqlmodel
 pydantic-core==2.14.6
     # via
     #   -c requirements/base.txt
@@ -195,6 +200,11 @@ sqlalchemy==2.0.26
     # via
     #   -c requirements/base.txt
     #   celery
+    #   sqlmodel
+sqlmodel==0.0.14
+    # via
+    #   -c requirements/base.txt
+    #   countdart (pyproject.toml)
 starlette==0.36.3
     # via
     #   -c requirements/base.txt

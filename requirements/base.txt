@@ -65,10 +65,13 @@ opencv-python==4.9.0.80
     # via countdart (pyproject.toml)
 prompt-toolkit==3.0.43
     # via click-repl
+psycopg2==2.9.9
+    # via countdart (pyproject.toml)
 pydantic==2.5.3
     # via
     #   countdart (pyproject.toml)
     #   fastapi
+    #   sqlmodel
 pydantic-core==2.14.6
     # via pydantic
 python-dateutil==2.8.2
@@ -80,7 +83,11 @@ six==1.16.0
 sniffio==1.3.0
     # via anyio
 sqlalchemy==2.0.26
-    # via celery
+    # via
+    #   celery
+    #   sqlmodel
+sqlmodel==0.0.14
+    # via countdart (pyproject.toml)
 starlette==0.36.3
     # via fastapi
 tqdm==4.66.1

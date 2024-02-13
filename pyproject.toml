@@ -27,7 +27,9 @@ dependencies = [
     "fastapi",
     "vidgear",
     "opencv-python",
-    "celery[sqlalchemy]"
+    "celery[sqlalchemy]",
+    "psycopg2",
+    "sqlmodel",
 ]
 dynamic = ["version"]
 
