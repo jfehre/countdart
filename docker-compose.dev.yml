@@ -12,10 +12,13 @@ services:
   db:
     image: postgres
     restart: always
+    ports:
+      - '5432:5432'
     volumes:
       - app-db-data:/var/lib/postgresql/data/pgdata
     environment:
       - PGDATA=/var/lib/postgresql/data/pgdata
+      - POSTGRES_PASSWORD=postgres
     healthcheck:
       test: "exit 0"
   celeryworker:

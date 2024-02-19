@@ -7,7 +7,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 from sqlmodel import SQLModel
 
-POSTGRES_URI = "postgresql://postgres:@db.local:5432/countdart_dev"
+POSTGRES_URI = "postgresql+psycopg2://postgres:postgres@db:5432/"
 
 __all__ = "get_session"
 
@@ -26,7 +26,7 @@ def init_db(db: Session) -> None:
 
 
 def get_session():
-    """Creates and returns a sqlalchemy database session
+    """Creates and returns a sqlmodel database session
 
     :yield: _description_
     """

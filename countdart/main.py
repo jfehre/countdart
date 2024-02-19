@@ -8,12 +8,18 @@ from fastapi.middleware.cors import CORSMiddleware
 from countdart.api import router
 from countdart.database import get_session, init_db
 
+# TODO: Replace with settings
+API_V1_STR = "/api/v1"
+
 
 def create_app() -> FastAPI:
     """Create the FastAPI app and include the router."""
 
     app = FastAPI(
         title="Count Dart",
+        openapi_url=f"{API_V1_STR}/openapi.json",
+        docs_url=f"{API_V1_STR}/docs",
+        redoc_url=f"{API_V1_STR}/redoc",
     )
     origins = ["*"]
 

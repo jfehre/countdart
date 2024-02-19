@@ -3,14 +3,22 @@ Schema of a dartboard setup. Each dartboard contains
 a list of cameras and a state (active).
 May also contain more settings in the future.
 """
-from typing import List, Optional
+from typing import Optional
 
-from sqlmodel import Field, SQLModel
+from sqlmodel import Field
 
-__all__ = ("Dartboard", "DartboardBase")
+from .base import BaseModel
+
+__all__ = (
+    "Dartboard",
+    "DartboardBase",
+    "DartboardCreate",
+    "DartboardRead",
+    "DartboardPatch",
+)
 
 
-class DartboardBase(SQLModel):
+class DartboardBase(BaseModel):
     """
     Base schema for a configurable dartboard setup.
     """
@@ -25,4 +33,31 @@ class Dartboard(DartboardBase, table=True):
     """
 
     id: Optional[int] = Field(default=None, primary_key=True)
-    cameras: Optional[List[int]]
+
+
+class DartboardCreate(DartboardBase):
+    """
+    Dartboard schema used to create new dartboard
+    """
+
+    pass
+
+
+class DartboardRead(DartboardBase):
+    """
+    Dartboard schema which is return from fastapi.
+    We can not return Dartboard directly, because of possible
+    relationships which will not be resolved.
+    """
+
+    id: int
+
+
+class DartboardPatch(BaseModel):
+    """
+    Dartboard schema to patch a dartboard.
+    Contains all fields which can be patched
+    """
+
+    name: Optional[str]
+    active: Optional[bool]

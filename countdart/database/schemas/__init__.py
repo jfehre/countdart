@@ -22,4 +22,10 @@ the tutorial are:
     such that the client can rely on always getting an ID.
 
 """
-from .dartboard import Dartboard, DartboardBase  # noqa: F401
+from .dartboard import (  # noqa: F401
+    Dartboard,
+    DartboardBase,
+    DartboardCreate,
+    DartboardPatch,
+    DartboardRead,
+)
