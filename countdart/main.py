@@ -1,6 +1,4 @@
-"""
-Main process. This file is the entry point to start the backend.
-"""
+"""Main process. This file is the entry point to start the backend."""
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware

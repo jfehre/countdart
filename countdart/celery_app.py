@@ -1,5 +1,4 @@
-"""
-Creates a singleton celery app, which can be used project wide,
+"""Creates a singleton celery app, which can be used project wide,
 to define tasks which are executed by a seperate celery worker.
 
 Celery needs a worker, which should be started as a docker service defined
@@ -17,8 +16,11 @@ CELERY_BACKEND = "db+sqlite:///db.sqlite"
 def make_celery(app_name: str) -> Celery:
     """Creates a celery app to manage tasks.
 
-    :param app_name: celery app name
-    :return: a celery app object
+    Args:
+        app_name: celery app name
+
+    Returns:
+        a celery app object
     """
     celery_app = Celery(
         app_name,

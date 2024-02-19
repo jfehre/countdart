@@ -1,5 +1,4 @@
-"""
-REST API endpoint for dartboards.
+"""REST API endpoint for dartboards.
 Used to retrieve, create, update and delete dartboards
 """
 
@@ -20,7 +19,8 @@ def create_dartboard(
 ) -> schemas.DartboardRead:
     """Create new dartboard
 
-    :return: Created dartboard
+    Returns:
+        Created dartboard
     """
     dartboard = crud.create_dartboard(dartboard, session)
     return dartboard
@@ -30,7 +30,8 @@ def create_dartboard(
 def get_dartboards(session: Session = Depends(get_session)):
     """Retrieve all dartboards
 
-    :return: List of dartboards
+    Returns:
+        List of dartboards
     """
     dartboards = crud.get_dartboards(session)
     return dartboards
@@ -40,7 +41,8 @@ def get_dartboards(session: Session = Depends(get_session)):
 def get_dartboard(dartboard_id: int, session: Session = Depends(get_session)):
     """Retrieve dartboard with given id
 
-    :return: Dartboard with given id
+    Returns:
+        Dartboard with given id
     """
     dartboard = crud.get_dartboard(dartboard_id, session)
 
@@ -59,7 +61,8 @@ def update_dartboard(
 ):
     """Retrieve dartboard with given id
 
-    :return: Dartboard with given id
+    Returns:
+        Dartboard with given id
     """
     # retrieve existing dartboard
     db_dartboard = crud.get_dartboard(dartboard_id, session)

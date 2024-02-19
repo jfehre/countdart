@@ -1,6 +1,4 @@
-"""
-This worker module contains all celery task.
-"""
+"""This worker module contains all celery task."""
 
 import time
 
@@ -15,8 +13,11 @@ def test_celery(string: str) -> str:
     Will sleep two seconds and then return a test string,
     which contains the input string
 
-    :param string: any input string
-    :return: test string which contains the input string
+    Args:
+        string: any input string
+
+    Returns:
+        test string which contains the input string
     """
     time.sleep(2)
     return f"test task return {string}"
@@ -27,7 +28,8 @@ def process_camera(self, cam: int):
     """Celery task to do the image processing of one camera.
     At the moment only a skeleton
 
-    :param cam: _description_
+    Args:
+        cam: usb cam index
     """
     # start camera
     # create operators

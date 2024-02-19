@@ -1,6 +1,4 @@
-"""
-FastAPI Routes and endpoints
-"""
+"""FastAPI Routes and endpoints"""
 from fastapi import APIRouter
 
 from .dartboard import router as dartboard_router

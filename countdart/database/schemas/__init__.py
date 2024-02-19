@@ -1,5 +1,4 @@
-"""
-.. _`basics tutorial`: https://sqlmodel.tiangolo.com/
+""".. _`basics tutorial`: https://sqlmodel.tiangolo.com/
 .. _`tutorial about using sqlmodel in conjunction with FastAPI`:
 https://sqlmodel.tiangolo.com/tutorial/fastapi/update/
 

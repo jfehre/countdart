@@ -8,8 +8,11 @@ import countdart.database.schemas as schemas
 def get_dartboards(session: Session) -> List[schemas.Dartboard]:
     """Retrieve all dartboards from database.
 
-    :param session: SQL session
-    :return: List of dartboards
+    Args:
+        session: SQL session
+
+    Returns:
+        List of dartboards
     """
     dartboards = session.query(schemas.Dartboard).all()
     return dartboards
@@ -18,9 +21,12 @@ def get_dartboards(session: Session) -> List[schemas.Dartboard]:
 def get_dartboard(dartboard_id: int, session: Session) -> schemas.Dartboard:
     """Retrieve specific Dartboard with given id from database
 
-    :param dartboard_id: Unique id of dartboard
-    :param session: SQL session
-    :return: Dartboard with given id
+    Args:
+        dartboard_id: Unique id of dartboard
+        session: SQL session
+
+    Returns:
+        Dartboard with given id
     """
     dartboard = (
         session.query(schemas.Dartboard)
@@ -35,9 +41,12 @@ def create_dartboard(
 ) -> schemas.Dartboard:
     """Create a new dartboard from dartboard model and save in database
 
-    :param dartboard: sqlmodel of dartboard to create
-    :param session: SQL session
-    :return: created dartboard
+    Args:
+        dartboard: sqlmodel of dartboard to create
+        session: SQL session
+
+    Returns:
+        created dartboard
     """
     db_is = schemas.Dartboard.model_validate(dartboard)
     session.add(db_is)
@@ -53,10 +62,13 @@ def update_dartboard(
 ) -> schemas.Dartboard:
     """Update dartboard, is given existing dartboard and modified dartboard
 
-    :param dartboard: existing dartboard
-    :param modified_dartboard: modified dartboard model
-    :param session: SQL session
-    :return: updated dartboard
+    Args:
+        dartboard: existing dartboard
+        modified_dartboard: modified dartboard model
+        session: SQL session
+
+    Returns:
+        updated dartboard
     """
     updated_data = modified_dartboard.model_dump(exclude_unset=True)
     for key, value in updated_data.items():
@@ -69,9 +81,12 @@ def update_dartboard(
 def delete_dartboard(dartboard_id: int, session: Session):
     """Delete dartboard with given id from database
 
-    :param dartboard_id: Unique id of dartboard
-    :param session: SQL session
-    :return: string "Deleted"
+    Args:
+        dartboard_id: Unique id of dartboard
+        session: SQL session
+
+    Returns:
+        string "Deleted"
     """
     dartboard = get_dartboard(dartboard_id)
     session.delete(dartboard)

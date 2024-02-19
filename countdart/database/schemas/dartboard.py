@@ -1,5 +1,4 @@
-"""
-Schema of a dartboard setup. Each dartboard contains
+"""Schema of a dartboard setup. Each dartboard contains
 a list of cameras and a state (active).
 May also contain more settings in the future.
 """
@@ -28,24 +27,19 @@ class DartboardBase(BaseModel):
 
 
 class Dartboard(DartboardBase, table=True):
-    """
-    Dartboard schema. This will also be saved in the database as a table.
-    """
+    """Dartboard schema. This will also be saved in the database as a table."""
 
     id: Optional[int] = Field(default=None, primary_key=True)
 
 
 class DartboardCreate(DartboardBase):
-    """
-    Dartboard schema used to create new dartboard
-    """
+    """Dartboard schema used to create new dartboard"""
 
     pass
 
 
 class DartboardRead(DartboardBase):
-    """
-    Dartboard schema which is return from fastapi.
+    """Dartboard schema which is return from fastapi.
     We can not return Dartboard directly, because of possible
     relationships which will not be resolved.
     """
@@ -54,8 +48,7 @@ class DartboardRead(DartboardBase):
 
 
 class DartboardPatch(BaseModel):
-    """
-    Dartboard schema to patch a dartboard.
+    """Dartboard schema to patch a dartboard.
     Contains all fields which can be patched
     """
 

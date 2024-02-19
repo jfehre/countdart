@@ -1,6 +1,4 @@
-"""
-Test routes to test some functions. May be temporar.
-"""
+"""Test routes to test some functions. May be temporar."""
 
 from typing import Union
 
@@ -24,9 +22,10 @@ class TaskOut(BaseModel):
 
 @router.get("")
 def get_hello_world():
-    """returns "Heelo World" to test if endpoints are working
+    """returns "Hello World" to test if endpoints are working
 
-    :return: string with "Hello World"
+    Returns:
+        string with "Hello World"
     """
     return "Hello World"
 
@@ -35,7 +34,8 @@ def get_hello_world():
 def start_task() -> TaskOut:
     """Starts a celery task to test if it is working
 
-    :return: Task information
+    Returns:
+        Task information
     """
     r = test_celery.delay("hello")
     return _to_task_out(r)
@@ -45,8 +45,11 @@ def start_task() -> TaskOut:
 def status(task_id: str) -> TaskOut:
     """Get the status of a celery task with a given id
 
-    :param task_id: id of the task
-    :return: Task information
+    Args:
+        task_id: id of the task
+
+    Returns:
+        Task information
     """
     r = celery_app.AsyncResult(task_id)
     return _to_task_out(r)
@@ -55,8 +58,11 @@ def status(task_id: str) -> TaskOut:
 def _to_task_out(r: AsyncResult) -> TaskOut:
     """converts an AsyncResult from Celery to a readable output schema
 
-    :param r: AsyncResult
-    :return: Model for task output
+    Args:
+        r: AsyncResult
+
+    Returns:
+        Model for task output
     """
     return TaskOut(
         id=r.task_id, status=r.status, result=r.traceback if r.failed() else r.result

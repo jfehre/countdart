@@ -1,5 +1,4 @@
-"""
-Initializes a postgresql table and contains a factory function
+"""Initializes a postgresql table and contains a factory function
 to return sessions.
 """
 
@@ -19,16 +18,15 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 def init_db(db: Session) -> None:
-    """
-    Initialize a new database with defined sqlmodel
-    """
+    """Initialize a new database with defined sqlmodel"""
     SQLModel.metadata.create_all(bind=engine)
 
 
 def get_session():
     """Creates and returns a sqlmodel database session
 
-    :yield: _description_
+    Yields:
+        Session: database session
     """
     session = SessionLocal()
     try:
