@@ -24,10 +24,19 @@ services:
   celeryworker:
     build:
       context: .
-      dockerfile: Dockerfile
+      target: dev
+    # we need privilege to access host usb devices like cameras
+    user: root
+    privileged: true
     volumes:
       - ./:/app
     command: celery -A countdart.celery_app.celery_app worker --loglevel=INFO
+    healthcheck:
+      test: "exit 0"
+  redis:
+    image: redis
+    ports:
+      - '6379:6379'
     healthcheck:
       test: "exit 0"
 

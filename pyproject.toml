@@ -14,9 +14,6 @@ classifiers = [
     "Environment :: Web Environment",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
 ]
 dependencies = [
     "numpy",
@@ -30,6 +27,8 @@ dependencies = [
     "celery[sqlalchemy]",
     "psycopg2",
     "sqlmodel",
+    "pillow",
+    "redis"
 ]
 dynamic = ["version"]
 

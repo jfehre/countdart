@@ -2,14 +2,20 @@
 to define tasks which are executed by a seperate celery worker.
 
 Celery needs a worker, which should be started as a docker service defined
-in docker-compose as celeryworker. Alternatively you can create a worker
-with executing `celery -A countdart.celery_app.celery_app worker --loglevel=INFO`
-in a seperate terminal.
+in docker-compose as celeryworker.
+Alternatively you can create a worker with executing
+`celery -A countdart.celery_app.celery_app worker --loglevel=INFO`
+in a seperate terminal. This also helps with debugging, because
+you are able to see logging information
+
+If you want to better debug celery task install flower `pip install flower`
+and use command `celery -A countdart.celery_app.celery_app flower`
+to start a task manager
 """
 
 from celery import Celery
 
-CELERY_BROKER = "sqla+sqlite:///db.sqlite"
+CELERY_BROKER = "redis://redis:6379/0"
 CELERY_BACKEND = "db+sqlite:///db.sqlite"
 
 

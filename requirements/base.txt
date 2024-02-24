@@ -10,6 +10,8 @@ annotated-types==0.6.0
     # via pydantic
 anyio==4.2.0
     # via starlette
+async-timeout==4.0.3
+    # via redis
 backports-zoneinfo[tzdata]==0.2.1
     # via
     #   celery
@@ -63,6 +65,8 @@ numpy==1.24.4
     #   vidgear
 opencv-python==4.9.0.80
     # via countdart (pyproject.toml)
+pillow==10.2.0
+    # via countdart (pyproject.toml)
 prompt-toolkit==3.0.43
     # via click-repl
 psycopg2==2.9.9
@@ -76,6 +80,8 @@ pydantic-core==2.14.6
     # via pydantic
 python-dateutil==2.8.2
     # via celery
+redis==5.0.1
+    # via countdart (pyproject.toml)
 requests==2.31.0
     # via vidgear
 six==1.16.0

@@ -40,8 +40,7 @@ class DartboardCreate(DartboardBase):
 
 class DartboardRead(DartboardBase):
     """Dartboard schema which is return from fastapi.
-    We can not return Dartboard directly, because of possible
-    relationships which will not be resolved.
+    We can not return Dartboard dirclass TaskOut(BaseModel):
     """
 
     id: int

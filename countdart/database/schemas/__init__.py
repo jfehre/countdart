@@ -21,6 +21,7 @@ the tutorial are:
     such that the client can rely on always getting an ID.
 
 """
+from .base import BaseModel  # noqa: F401
 from .dartboard import (  # noqa: F401
     Dartboard,
     DartboardBase,
@@ -28,3 +29,4 @@ from .dartboard import (  # noqa: F401
     DartboardPatch,
     DartboardRead,
 )
+from .task import TaskOut  # noqa: F401

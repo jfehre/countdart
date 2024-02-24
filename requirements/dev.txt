@@ -16,6 +16,10 @@ anyio==4.2.0
     # via
     #   -c requirements/base.txt
     #   starlette
+async-timeout==4.0.3
+    # via
+    #   -c requirements/base.txt
+    #   redis
 attrs==23.2.0
     # via interrogate
 backports-zoneinfo[tzdata]==0.2.1
@@ -144,6 +148,10 @@ packaging==23.2
     #   build
 pathspec==0.12.1
     # via black
+pillow==10.2.0
+    # via
+    #   -c requirements/base.txt
+    #   countdart (pyproject.toml)
 pip-tools==7.3.0
     # via countdart (pyproject.toml)
 platformdirs==4.1.0
@@ -184,6 +192,10 @@ python-dateutil==2.8.2
     #   celery
 pyyaml==6.0.1
     # via pre-commit
+redis==5.0.1
+    # via
+    #   -c requirements/base.txt
+    #   countdart (pyproject.toml)
 requests==2.31.0
     # via
     #   -c requirements/base.txt
