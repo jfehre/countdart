@@ -5,7 +5,6 @@ countdart/io/
 notebooks/
 countdart/operators/
 db.sqlite
-countdart/api/camera.py
 
 
 # Byte-compiled / optimized / DLL files

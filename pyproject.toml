@@ -36,7 +36,7 @@ dynamic = ["version"]
 homepage = "https://github.com/jfehre"
 
 [project.optional-dependencies]
-test = []
+test = ["pytest", "httpx"]
 dev = [
     "pre-commit",
     "black",

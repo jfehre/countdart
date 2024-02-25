@@ -1,3 +1,7 @@
+"""
+this module contains functions to perform CRUD operations on dartboard model
+"""
+
 from typing import List
 
 from sqlalchemy.orm import Session
@@ -38,7 +42,7 @@ def get_dartboard(dartboard_id: int, session: Session) -> schemas.Dartboard:
 
 def create_dartboard(
     dartboard: schemas.DartboardCreate, session: Session
-) -> schemas.Dartboard:
+) -> schemas.DartboardRead:
     """Create a new dartboard from dartboard model and save in database
 
     Args:
@@ -88,7 +92,7 @@ def delete_dartboard(dartboard_id: int, session: Session):
     Returns:
         string "Deleted"
     """
-    dartboard = get_dartboard(dartboard_id)
+    dartboard = get_dartboard(dartboard_id, session)
     session.delete(dartboard)
     session.commit()
-    return {"Deleted"}
+    return dartboard

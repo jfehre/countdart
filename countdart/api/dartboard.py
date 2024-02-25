@@ -18,10 +18,10 @@ from countdart.database import get_session, schemas
 from countdart.database.crud import dartboard as crud
 from countdart.worker import process_camera
 
-router = APIRouter(prefix="/dartboard", tags=["dartboard"])
+router = APIRouter(prefix="/dartboards", tags=["dartboard"])
 
 
-@router.post("", response_model=List[schemas.DartboardRead])
+@router.post("", response_model=schemas.DartboardRead)
 def create_dartboard(
     dartboard: schemas.DartboardCreate, session: Session = Depends(get_session)
 ) -> schemas.DartboardRead:
@@ -80,6 +80,21 @@ def update_dartboard(
         )
     updated = crud.update_dartboard(db_dartboard, dartboard, session)
     return updated
+
+
+@router.delete("/{dartboard_id}", response_model=schemas.DartboardRead)
+def delete_dartboard(dartboard_id: int, session: Session = Depends(get_session)):
+    """Delete dartboard with given id
+
+    Returns:
+        Dartboard with given id
+    """
+    dartboard = crud.delete_dartboard(dartboard_id, session)
+    if dartboard is None:
+        raise HTTPException(
+            status_code=404, detail=f"Dartboard with id={dartboard_id} not found"
+        )
+    return dartboard
 
 
 @router.get("/{dartboard_id}/start", response_model=schemas.TaskOut)

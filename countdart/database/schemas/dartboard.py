@@ -22,7 +22,7 @@ class DartboardBase(BaseModel):
     Base schema for a configurable dartboard setup.
     """
 
-    name: str = Field(sa_column_kwargs={"unique": True})
+    name: str
     active: bool
 
 
@@ -51,5 +51,5 @@ class DartboardPatch(BaseModel):
     Contains all fields which can be patched
     """
 
-    name: Optional[str]
-    active: Optional[bool]
+    name: Optional[str] = Field(default=None)
+    active: Optional[bool] = Field(default=None)

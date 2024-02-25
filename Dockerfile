@@ -32,10 +32,13 @@ FROM base as dev
 
 # Install dependencies
 COPY requirements/dev.txt /dev-requirements.txt
+COPY requirements/test.txt /test-requirements.txt
 RUN --mount=type=cache,target=/root/.cache/pip,mode=0755 \
     python3 -m pip install \
-    -r /dev-requirements.txt && \
-    rm /dev-requirements.txt
+    -r /dev-requirements.txt  \
+    -r /test-requirements.txt && \
+    rm /dev-requirements.txt \
+       /test-requirements.txt
 
 COPY . .
 RUN python3 -m pip install -e .

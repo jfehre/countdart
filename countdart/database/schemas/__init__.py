@@ -22,6 +22,7 @@ the tutorial are:
 
 """
 from .base import BaseModel  # noqa: F401
+from .cam import Cam, CamBase, CamCreate, CamPatch, CamRead  # noqa: F401
 from .dartboard import (  # noqa: F401
     Dartboard,
     DartboardBase,
