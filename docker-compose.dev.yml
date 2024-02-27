@@ -5,10 +5,15 @@ services:
     build:
       context: .
       target: dev
+    # we need privilege to access host usb devices like cameras
+    privileged: true
     volumes:
       - ./:/app
     # Overrides default command so things don't shut down after the process ends.
     command: /bin/bash -c "while sleep 1000; do :; done"
+    depends_on:
+      - db
+      - redis
   db:
     image: postgres
     restart: always

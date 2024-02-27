@@ -1,7 +1,6 @@
 # Following files are WIP and should not be commited at the current time
 # This is an hacky workaround for pre-commit
 test/
-countdart/io/
 notebooks/
 countdart/operators/
 db.sqlite

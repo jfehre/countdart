@@ -11,6 +11,9 @@ __all__ = (
     "Cam",
     "CamBase",
     "CamCreate",
+    "CamRead",
+    "CamPatch",
+    "CamHardware",
 )
 
 
@@ -19,8 +22,9 @@ class CamBase(BaseModel):
     Base schema for a configurable dartboard setup.
     """
 
-    name: str
+    card_name: str
     active: bool
+    hardware_id: int
 
 
 class Cam(CamBase, table=True):
@@ -46,5 +50,15 @@ class CamPatch(BaseModel):
     Contains all fields which can be patched
     """
 
-    name: Optional[str] = Field(default=None)
+    card_name: Optional[str] = Field(default=None)
     active: Optional[bool] = Field(default=None)
+
+
+class CamHardware(BaseModel):
+    """Cam hardware schema.
+    Represents a camera connected to the system.
+    contains the current hardware id and the card name of the camera.
+    """
+
+    hardware_id: int
+    card_name: str

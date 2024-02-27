@@ -39,16 +39,8 @@ celery[sqlalchemy]==5.3.6
     # via
     #   -c requirements/base.txt
     #   countdart (pyproject.toml)
-certifi==2024.2.2
-    # via
-    #   -c requirements/base.txt
-    #   requests
 cfgv==3.4.0
     # via pre-commit
-charset-normalizer==3.3.2
-    # via
-    #   -c requirements/base.txt
-    #   requests
 click==8.1.7
     # via
     #   -c requirements/base.txt
@@ -75,14 +67,6 @@ click-repl==0.3.0
     #   celery
 colorama==0.4.6
     # via interrogate
-colorlog==6.8.2
-    # via
-    #   -c requirements/base.txt
-    #   vidgear
-cython==3.0.8
-    # via
-    #   -c requirements/base.txt
-    #   vidgear
 distlib==0.3.8
     # via virtualenv
 docstring-parser==0.15
@@ -115,7 +99,6 @@ idna==3.6
     # via
     #   -c requirements/base.txt
     #   anyio
-    #   requests
 importlib-metadata==7.0.1
     # via build
 interrogate==1.5.0
@@ -137,7 +120,6 @@ numpy==1.24.4
     #   -c requirements/base.txt
     #   countdart (pyproject.toml)
     #   opencv-python
-    #   vidgear
 opencv-python==4.9.0.80
     # via
     #   -c requirements/base.txt
@@ -196,10 +178,6 @@ redis==5.0.1
     # via
     #   -c requirements/base.txt
     #   countdart (pyproject.toml)
-requests==2.31.0
-    # via
-    #   -c requirements/base.txt
-    #   vidgear
 six==1.16.0
     # via
     #   -c requirements/base.txt
@@ -231,10 +209,6 @@ tomli==2.0.1
     #   build
     #   pip-tools
     #   pyproject-hooks
-tqdm==4.66.1
-    # via
-    #   -c requirements/base.txt
-    #   vidgear
 typer==0.9.0
     # via
     #   -c requirements/base.txt
@@ -258,15 +232,11 @@ tzdata==2024.1
     #   -c requirements/base.txt
     #   backports-zoneinfo
     #   celery
-urllib3==2.2.0
-    # via
-    #   -c requirements/base.txt
-    #   requests
 uvicorn==0.27.0.post1
     # via
     #   -c requirements/base.txt
     #   countdart (pyproject.toml)
-vidgear==0.3.2
+v4l2py==2.3.0
     # via
     #   -c requirements/base.txt
     #   countdart (pyproject.toml)

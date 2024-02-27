@@ -12,6 +12,7 @@ from sqlmodel import Session
 from countdart.celery_app import celery_app
 from countdart.database import get_session, schemas
 from countdart.database.crud import cam as crud
+from countdart.io import USBCam
 from countdart.worker import process_camera
 
 router = APIRouter(prefix="/cams", tags=["Camera"])
@@ -32,13 +33,28 @@ def create_cam(
 
 @router.get("", response_model=List[schemas.CamRead])
 def get_cams(session: Session = Depends(get_session)):
-    """Retrieve all cams
+    """Retrieve all database cams
 
     Returns:
         List of cams
     """
     cams = crud.get_cams(session)
     return cams
+
+
+@router.get("/find", response_model=List[schemas.CamHardware])
+def find_cams():
+    """Find all available cams connected to the system
+
+    Returns:
+        List of available cams
+    """
+    cams = USBCam.get_available_cams()
+    # convert to CamHardware
+    result = []
+    for cam in cams:
+        result.append(schemas.CamHardware(**cam))
+    return result
 
 
 @router.get("/{cam_id}", response_model=schemas.CamRead)

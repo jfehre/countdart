@@ -5,9 +5,9 @@ import time
 
 from celery.contrib.abortable import AbortableTask
 from celery.utils.log import get_task_logger
-from vidgear.gears import CamGear
 
 from countdart.celery_app import celery_app
+from countdart.io import USBCam
 
 logger = get_task_logger(__name__)
 
@@ -41,11 +41,12 @@ def process_camera(self, cam: int):
 
     r = redis.Redis(host="redis", port=6379)
     # start camera
-    stream = CamGear(source=0).start()
+    cam = USBCam(0)
+    cam.start()
     # create operators
     # endless loop. Needs to be canceled by celery
     while not self.is_aborted():
-        frame = stream.read()
+        frame = cam.get_frame()
         # send frame
         # https://stackoverflow.com/a/60457732
         h, w, c = frame.shape
@@ -59,4 +60,4 @@ def process_camera(self, cam: int):
         print("Hallo")
 
     # task was aborted so shutdown gracefully
-    stream.stop()
+    cam.stop()

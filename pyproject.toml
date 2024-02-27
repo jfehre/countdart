@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "countdart"
 authors = [
-    { name = "Jonas Fehrenbach", email = "jonas.fehrenbach@gmail.com" },
+    { name = "Jonas Fehrenbach", email = "jonas.fehrenbach1@gmail.com" },
 ]
 description = ""
 readme = "README.md"
@@ -22,13 +22,13 @@ dependencies = [
     "docstring-parser",
     "uvicorn",
     "fastapi",
-    "vidgear",
     "opencv-python",
     "celery[sqlalchemy]",
     "psycopg2",
     "sqlmodel",
     "pillow",
-    "redis"
+    "redis",
+    "v4l2py"
 ]
 dynamic = ["version"]
 
