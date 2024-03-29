@@ -1,25 +1,26 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "Debug Backend",
-            "type": "python",
-            "request": "launch",
-            "module": "uvicorn",
-            "args": [
-                "--factory",
-                "countdart.main:create_app",
-                "--port",
-                "7878",
-                "--reload",
-                "--log-level",
-                "debug"
-            ],
-            "console": "integratedTerminal",
-            "justMyCode": true
-        }
-    ]
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug Backend",
+      "type": "python",
+      "python": "/opt/venvs/countdart/bin/python",
+      "request": "launch",
+      "module": "uvicorn",
+      "args": [
+        "--factory",
+        "countdart.main:create_app",
+        "--port",
+        "7878",
+        "--reload",
+        "--log-level",
+        "debug"
+      ],
+      "console": "integratedTerminal",
+      "justMyCode": true
+    }
+  ]
 }
