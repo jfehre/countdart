@@ -39,7 +39,7 @@ export function SidebarNav(): ReactElement {
         <Stack h="100%" justify="space-between">
             <Stack h="75%">
                 <Image
-                    src="images/logo.webp"
+                    src="/images/logo.webp"
                     h={75}
                     w="auto"
                     fit="contain"

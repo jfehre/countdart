@@ -3,6 +3,7 @@ import { createTheme, MantineProvider } from "@mantine/core";
 import { Inter } from "next/font/google";
 import { MainAppShell } from "./components/appshell";
 import "@mantine/core/styles.css";
+import "@mantine/notifications/styles.css";
 import React, { type ReactElement } from "react";
 
 const inter = Inter({ subsets: ["latin"] });

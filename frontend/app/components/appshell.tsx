@@ -4,12 +4,11 @@ import { AppShell, Burger } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { SidebarNav } from "./Sidebar/sidebar";
 import React, { type ReactElement } from "react";
+import { Notifications } from "@mantine/notifications";
 
 /**
  * This is the main app shell and renders the navbar, header and footer
  *
- * https://github.com/vercel/next.js/issues/52558
- * TODO: This component is getting rerendered on each site page. Should not happen
  * @param param0
  * @returns
  */
@@ -44,7 +43,10 @@ export function MainAppShell({
             <AppShell.Navbar>
                 <SidebarNav />
             </AppShell.Navbar>
-            <AppShell.Main>{children}</AppShell.Main>
+            <AppShell.Main>
+                <Notifications />
+                {children}
+            </AppShell.Main>
             <AppShell.Footer></AppShell.Footer>
         </AppShell>
     );
