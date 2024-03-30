@@ -28,6 +28,12 @@ class BaseCam(ABC):
 
 
 class USBCam(BaseCam):
+    """Implementation of an usb cam with v4l2py
+
+    Args:
+        BaseCam ():
+    """
+
     def __init__(self, device_id: int, **kwargs) -> None:
         self.cam = Device.from_id(device_id, **kwargs)
         # Load self.cam.info (not used currently)

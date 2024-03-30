@@ -9,103 +9,95 @@ from typing import List
 import numpy as np
 import redis
 from celery.contrib.abortable import AbortableAsyncResult
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, HTTPException, Response
 from PIL import Image
-from sqlmodel import Session
 
 from countdart.celery_app import celery_app
-from countdart.database import get_session, schemas
+from countdart.database import schemas
 from countdart.database.crud import dartboard as crud
+from countdart.database.db import NameAlreadyTakenError, NotFoundError
 from countdart.worker import process_camera
 
 router = APIRouter(prefix="/dartboards", tags=["dartboard"])
 
 
-@router.post("", response_model=schemas.DartboardRead)
-def create_dartboard(
-    dartboard: schemas.DartboardCreate, session: Session = Depends(get_session)
-) -> schemas.DartboardRead:
-    """Create new dartboard
-
-    Returns:
-        Created dartboard
-    """
-    dartboard = crud.create_dartboard(dartboard, session)
-    return dartboard
-
-
-@router.get("", response_model=List[schemas.DartboardRead])
-def get_dartboards(session: Session = Depends(get_session)):
+@router.get("", response_model_by_alias=False)
+def get_dartboards() -> List[schemas.Dartboard]:
     """Retrieve all dartboards
 
     Returns:
         List of dartboards
     """
-    dartboards = crud.get_dartboards(session)
-    return dartboards
+    try:
+        result = crud.get_dartboards()
+    except NotFoundError as e:
+        raise HTTPException(404) from e
+    return result
 
 
-@router.get("/{dartboard_id}", response_model=schemas.DartboardRead)
-def get_dartboard(dartboard_id: int, session: Session = Depends(get_session)):
-    """Retrieve dartboard with given id
+@router.post("", response_model_by_alias=False)
+def create_dartboard(dartboard: schemas.DartboardCreate) -> schemas.Dartboard:
+    """Create new dartboard
 
     Returns:
-        Dartboard with given id
+        Created dartboard
     """
-    dartboard = crud.get_dartboard(dartboard_id, session)
-
-    if dartboard is None:
-        raise HTTPException(
-            status_code=404, detail=f"Dartboard with id={dartboard_id} not found"
-        )
-    return dartboard
+    try:
+        result = crud.create_dartboard(dartboard)
+    except NameAlreadyTakenError as e:
+        raise HTTPException(409) from e
+    return result
 
 
-@router.patch("/{dartboard_id}", response_model=schemas.DartboardRead)
+@router.patch("/{dartboard_id}", response_model_by_alias=False)
 def update_dartboard(
-    dartboard_id: int,
+    dartboard_id: schemas.IdString,
     dartboard: schemas.DartboardPatch,
-    session: Session = Depends(get_session),
-):
+) -> schemas.Dartboard:
     """Retrieve dartboard with given id
 
     Returns:
         Dartboard with given id
     """
-    # retrieve existing dartboard
-    db_dartboard = crud.get_dartboard(dartboard_id, session)
-    if dartboard is None:
-        raise HTTPException(
-            status_code=404, detail=f"Dartboard with id={dartboard_id} not found"
-        )
-    updated = crud.update_dartboard(db_dartboard, dartboard, session)
+    try:
+        updated = crud.update_dartboard(dartboard_id, dartboard)
+    except NotFoundError as e:
+        raise HTTPException(404) from e
     return updated
 
 
-@router.delete("/{dartboard_id}", response_model=schemas.DartboardRead)
-def delete_dartboard(dartboard_id: int, session: Session = Depends(get_session)):
+@router.delete("/{dartboard_id}", response_model_by_alias=False)
+def delete_dartboard(dartboard_id: schemas.IdString):
     """Delete dartboard with given id
 
     Returns:
         Dartboard with given id
     """
-    dartboard = crud.delete_dartboard(dartboard_id, session)
-    if dartboard is None:
-        raise HTTPException(
-            status_code=404, detail=f"Dartboard with id={dartboard_id} not found"
-        )
-    return dartboard
+    try:
+        crud.delete_dartboard(dartboard_id)
+    except NotFoundError as e:
+        raise HTTPException(404) from e
 
 
-@router.get("/{dartboard_id}/start", response_model=schemas.TaskOut)
+@router.get("/{dartboard_id}", response_model_by_alias=False)
+def get_dartboard(dartboard_id: schemas.IdString) -> schemas.Dartboard:
+    """Retrieve dartboard with given id
+
+    Returns:
+        Dartboard with given id
+    """
+    try:
+        result = crud.get_dartboard(dartboard_id)
+    except NotFoundError as e:
+        raise HTTPException(404) from e
+    return result
+
+
+@router.get("/{dartboard_id}/start")
 def start_dartboard(
     dartboard_id: int,
-    session: Session = Depends(get_session),
 ) -> schemas.TaskOut:
     """starts the worker tasks for the dartboard
-
-    Args:
-        session (Session, optional): sql session. Defaults to Depends(get_session).
 
     Returns:
         schemas.TaskOut: Information about the started Task
@@ -117,12 +109,8 @@ def start_dartboard(
 @router.get("/{dartboard_id}/stop")
 def stop_dartboard(
     dartboard_id: int,
-    session: Session = Depends(get_session),
 ):
     """Will stop all active worker tasks at the moment
-
-    Args:
-        session (Session, optional): sql session. Defaults to Depends(get_session).
 
     Returns:
         schemas.TaskOut: Information about the started Task
@@ -136,10 +124,10 @@ def stop_dartboard(
     return "stopped"
 
 
-@router.get("/{dartboard_id}/frame", response_class=Response)
+@router.get("/{dartboard_id}/frame")
 def get_image(
     dartboard_id: int,
-):
+) -> Response:
     """Returns the current frame of the camera
 
     Args:

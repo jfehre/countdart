@@ -4,15 +4,14 @@ May also contain more settings in the future.
 """
 from typing import Optional
 
-from sqlmodel import Field
+from pydantic import ConfigDict, Field
 
-from .base import BaseModel
+from .base import BaseModel, PyObjectId
 
 __all__ = (
     "Dartboard",
     "DartboardBase",
     "DartboardCreate",
-    "DartboardRead",
     "DartboardPatch",
 )
 
@@ -26,10 +25,11 @@ class DartboardBase(BaseModel):
     active: bool
 
 
-class Dartboard(DartboardBase, table=True):
+class Dartboard(DartboardBase):
     """Dartboard schema. This will also be saved in the database as a table."""
 
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: PyObjectId = Field(alias="_id")
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class DartboardCreate(DartboardBase):
@@ -38,18 +38,10 @@ class DartboardCreate(DartboardBase):
     pass
 
 
-class DartboardRead(DartboardBase):
-    """Dartboard schema which is return from fastapi.
-    We can not return Dartboard dirclass TaskOut(BaseModel):
-    """
-
-    id: int
-
-
 class DartboardPatch(BaseModel):
     """Dartboard schema to patch a dartboard.
     Contains all fields which can be patched
     """
 
-    name: Optional[str] = Field(default=None)
-    active: Optional[bool] = Field(default=None)
+    name: Optional[str] = None
+    active: Optional[bool] = None

@@ -4,9 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "countdart"
-authors = [
-    { name = "Jonas Fehrenbach", email = "jonas.fehrenbach1@gmail.com" },
-]
+authors = [{ name = "Jonas Fehrenbach", email = "jonas.fehrenbach1@gmail.com" }]
 description = ""
 readme = "README.md"
 requires-python = ">=3.8"
@@ -23,12 +21,12 @@ dependencies = [
     "uvicorn",
     "fastapi",
     "opencv-python",
-    "celery[sqlalchemy]",
-    "psycopg2",
-    "sqlmodel",
+    "celery",
     "pillow",
     "redis",
-    "v4l2py"
+    "v4l2py",
+    "pymongo",
+    "pydantic-settings",
 ]
 dynamic = ["version"]
 
@@ -37,14 +35,7 @@ homepage = "https://github.com/jfehre"
 
 [project.optional-dependencies]
 test = ["pytest", "httpx"]
-dev = [
-    "pre-commit",
-    "black",
-    "isort",
-    "flake8",
-    "interrogate",
-    "pip-tools",
-]
+dev = ["pre-commit", "black", "isort", "flake8", "interrogate", "pip-tools"]
 plot = ["matplotlib"]
 
 

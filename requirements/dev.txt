@@ -35,7 +35,7 @@ black==23.12.1
     # via countdart (pyproject.toml)
 build==1.0.3
     # via pip-tools
-celery[sqlalchemy]==5.3.6
+celery==5.3.6
     # via
     #   -c requirements/base.txt
     #   countdart (pyproject.toml)
@@ -69,6 +69,10 @@ colorama==0.4.6
     # via interrogate
 distlib==0.3.8
     # via virtualenv
+dnspython==2.6.1
+    # via
+    #   -c requirements/base.txt
+    #   pymongo
 docstring-parser==0.15
     # via
     #   -c requirements/base.txt
@@ -85,10 +89,6 @@ filelock==3.13.1
     # via virtualenv
 flake8==7.0.0
     # via countdart (pyproject.toml)
-greenlet==3.0.3
-    # via
-    #   -c requirements/base.txt
-    #   sqlalchemy
 h11==0.14.0
     # via
     #   -c requirements/base.txt
@@ -146,10 +146,6 @@ prompt-toolkit==3.0.43
     # via
     #   -c requirements/base.txt
     #   click-repl
-psycopg2==2.9.9
-    # via
-    #   -c requirements/base.txt
-    #   countdart (pyproject.toml)
 py==1.11.0
     # via interrogate
 pycodestyle==2.11.1
@@ -159,19 +155,31 @@ pydantic==2.5.3
     #   -c requirements/base.txt
     #   countdart (pyproject.toml)
     #   fastapi
-    #   sqlmodel
+    #   pydantic-settings
 pydantic-core==2.14.6
     # via
     #   -c requirements/base.txt
     #   pydantic
+pydantic-settings==2.2.1
+    # via
+    #   -c requirements/base.txt
+    #   countdart (pyproject.toml)
 pyflakes==3.2.0
     # via flake8
+pymongo==4.6.3
+    # via
+    #   -c requirements/base.txt
+    #   countdart (pyproject.toml)
 pyproject-hooks==1.0.0
     # via build
 python-dateutil==2.8.2
     # via
     #   -c requirements/base.txt
     #   celery
+python-dotenv==1.0.1
+    # via
+    #   -c requirements/base.txt
+    #   pydantic-settings
 pyyaml==6.0.1
     # via pre-commit
 redis==5.0.1
@@ -186,15 +194,6 @@ sniffio==1.3.0
     # via
     #   -c requirements/base.txt
     #   anyio
-sqlalchemy==2.0.26
-    # via
-    #   -c requirements/base.txt
-    #   celery
-    #   sqlmodel
-sqlmodel==0.0.14
-    # via
-    #   -c requirements/base.txt
-    #   countdart (pyproject.toml)
 starlette==0.36.3
     # via
     #   -c requirements/base.txt
@@ -223,7 +222,6 @@ typing-extensions==4.9.0
     #   kombu
     #   pydantic
     #   pydantic-core
-    #   sqlalchemy
     #   starlette
     #   typer
     #   uvicorn

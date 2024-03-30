@@ -3,15 +3,14 @@ Cam schema for the database.
 """
 from typing import Optional
 
-from sqlmodel import Field
+from pydantic import ConfigDict, Field
 
-from .base import BaseModel
+from .base import BaseModel, PyObjectId
 
 __all__ = (
     "Cam",
     "CamBase",
     "CamCreate",
-    "CamRead",
     "CamPatch",
     "CamHardware",
 )
@@ -27,10 +26,11 @@ class CamBase(BaseModel):
     hardware_id: int
 
 
-class Cam(CamBase, table=True):
-    """Cam schema. This will also be saved in the database as a table."""
+class Cam(CamBase):
+    """Cam schema. This will also be saved in the mongo database as a collection."""
 
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: PyObjectId = Field(alias="_id")
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class CamCreate(CamBase):
@@ -39,19 +39,13 @@ class CamCreate(CamBase):
     pass
 
 
-class CamRead(CamBase):
-    """Cam schema which is returned from fastapi."""
-
-    id: int
-
-
 class CamPatch(BaseModel):
     """Cam schema to patch a existing cam.
     Contains all fields which can be patched
     """
 
-    card_name: Optional[str] = Field(default=None)
-    active: Optional[bool] = Field(default=None)
+    card_name: Optional[str] = None
+    active: Optional[bool] = None
 
 
 class CamHardware(BaseModel):

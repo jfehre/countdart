@@ -12,18 +12,17 @@ services:
     # Overrides default command so things don't shut down after the process ends.
     command: /bin/bash -c "while sleep 1000; do :; done"
     depends_on:
-      - db
+      - mongodb
       - redis
-  db:
-    image: postgres
+    environment:
+      - MONGO_DB_SERVER=mongodb://mongodb:27017
+  mongodb:
+    image: mongo:6-jammy
     restart: always
     ports:
-      - '5432:5432'
+      - 27017:27017
     volumes:
-      - app-db-data:/var/lib/postgresql/data/pgdata
-    environment:
-      - PGDATA=/var/lib/postgresql/data/pgdata
-      - POSTGRES_PASSWORD=postgres
+      - dbdata:/data/db
     healthcheck:
       test: "exit 0"
   celeryworker:
@@ -54,4 +53,4 @@ services:
     command: sh -c "while sleep 1000; do :; done"
 
 volumes:
-  app-db-data:
+  dbdata:

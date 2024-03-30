@@ -1,36 +1,34 @@
-"""Initializes a postgresql table and contains a factory function
-to return sessions.
+"""Initializes monog client
 """
 
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Session, sessionmaker
-from sqlmodel import SQLModel
+from pymongo import MongoClient
 
-POSTGRES_URI = "postgresql+psycopg2://postgres:postgres@db:5432/"
+from countdart.settings import settings
 
-__all__ = "get_session"
+__all__ = {"database"}
 
-# Create sql engine to connect with mongodb
-engine = create_engine(
-    POSTGRES_URI,
-)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+client = MongoClient(host=str(settings.MONGO_DB_SERVER))
+
+database = client[settings.MONGO_DB_DATABASE]
 
 
-def init_db(db: Session) -> None:
-    """Initialize a new database with defined sqlmodel"""
-    SQLModel.metadata.create_all(bind=engine)
+class NotFoundError(ValueError):
+    """Not found error to specify errors in mongodb crud operations.
+    This allows more specified handling of errors
 
-
-def get_session():
-    """Creates and returns a sqlmodel database session
-
-    Yields:
-        Session: database session
+    Args:
+        ValueError (_type_): _description_
     """
-    session = SessionLocal()
-    try:
-        yield session
-        session.commit()
-    finally:
-        session.close()
+
+    pass
+
+
+class NameAlreadyTakenError(ValueError):
+    """Name already taken error to specifiy errors when creating new documents
+    in mongodb
+
+    Args:
+        ValueError (_type_): _description_
+    """
+
+    pass

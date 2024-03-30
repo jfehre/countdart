@@ -1,3 +1,7 @@
+"""REST API endpoint for cams.
+Used to retrieve, create, update and delete dartboards
+"""
+
 import io
 import struct
 from typing import List
@@ -5,45 +9,95 @@ from typing import List
 import numpy as np
 import redis
 from celery.contrib.abortable import AbortableAsyncResult
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, HTTPException, Response
 from PIL import Image
-from sqlmodel import Session
 
 from countdart.celery_app import celery_app
-from countdart.database import get_session, schemas
+from countdart.database import schemas
 from countdart.database.crud import cam as crud
+from countdart.database.db import NameAlreadyTakenError, NotFoundError
 from countdart.io import USBCam
 from countdart.worker import process_camera
 
 router = APIRouter(prefix="/cams", tags=["Camera"])
 
 
-@router.post("", response_model=schemas.CamRead)
-def create_cam(
-    cam: schemas.CamCreate, session: Session = Depends(get_session)
-) -> schemas.CamRead:
-    """Create new cam
-
-    Returns:
-        Created cam
-    """
-    cam = crud.create_cam(cam, session)
-    return cam
-
-
-@router.get("", response_model=List[schemas.CamRead])
-def get_cams(session: Session = Depends(get_session)):
+@router.get("", response_model_by_alias=False)
+def get_cams() -> List[schemas.Cam]:
     """Retrieve all database cams
 
     Returns:
         List of cams
     """
-    cams = crud.get_cams(session)
-    return cams
+    try:
+        result = crud.get_cams()
+    except NotFoundError as e:
+        raise HTTPException(404) from e
+    return result
 
 
-@router.get("/find", response_model=List[schemas.CamHardware])
-def find_cams():
+@router.post("", response_model_by_alias=False)
+def create_cam(cam: schemas.CamCreate) -> schemas.Cam:
+    """Create new cam
+
+    Returns:
+        Created cam
+    """
+    try:
+        result = crud.create_cam(cam)
+    except NameAlreadyTakenError as e:
+        raise HTTPException(409) from e
+    return result
+
+
+@router.patch("/{cam_id}", response_model_by_alias=False)
+def update_cam(
+    cam_id: schemas.IdString,
+    cam: schemas.CamPatch,
+) -> schemas.Cam:
+    """Retrieve cam with given id
+
+    Returns:
+        cam with given id
+    """
+    try:
+        updated = crud.update_cam(cam_id, cam)
+    except NotFoundError as e:
+        raise HTTPException(404) from e
+    return updated
+
+
+@router.delete("/{cam_id}", response_model_by_alias=False)
+def delete_cam(
+    cam_id: schemas.IdString,
+):
+    """Delete cam with given id
+
+    Returns:
+        cam with given id
+    """
+    try:
+        crud.delete_cam(cam_id)
+    except NotFoundError as e:
+        raise HTTPException(404) from e
+
+
+@router.get("/{cam_id}", response_model_by_alias=False)
+def get_cam(cam_id: schemas.IdString) -> schemas.Cam:
+    """Retrieve cam with given id
+
+    Returns:
+        Cam with given id
+    """
+    try:
+        result = crud.get_cam(cam_id)
+    except NotFoundError as e:
+        raise HTTPException(404) from e
+    return result
+
+
+@router.get("/find")
+def find_cams() -> List[schemas.CamHardware]:
     """Find all available cams connected to the system
 
     Returns:
@@ -57,59 +111,9 @@ def find_cams():
     return result
 
 
-@router.get("/{cam_id}", response_model=schemas.CamRead)
-def get_cam(cam_id: int, session: Session = Depends(get_session)):
-    """Retrieve cam with given id
-
-    Returns:
-        Cam with given id
-    """
-    cam = crud.get_cam(cam_id, session)
-
-    if cam is None:
-        raise HTTPException(status_code=404, detail=f"Cam with id={cam_id} not found")
-    return cam
-
-
-@router.patch("/{cam_id}", response_model=schemas.CamRead)
-def update_cam(
-    cam_id: int,
-    cam: schemas.CamPatch,
-    session: Session = Depends(get_session),
-):
-    """Retrieve cam with given id
-
-    Returns:
-        cam with given id
-    """
-    # retrieve existing dartboard
-    db_cam = crud.get_cam(cam_id, session)
-    if cam is None:
-        raise HTTPException(status_code=404, detail=f"Cam with id={cam_id} not found")
-    updated = crud.update_cam(db_cam, cam, session)
-    return updated
-
-
-@router.delete("/{cam_id}", response_model=schemas.CamRead)
-def delete_cam(
-    cam_id: int,
-    session: Session = Depends(get_session),
-):
-    """Delete cam with given id
-
-    Returns:
-        cam with given id
-    """
-    cam = crud.delete_cam(cam_id, session)
-    if cam is None:
-        raise HTTPException(status_code=404, detail=f"Cam with id={cam_id} not found")
-    return cam
-
-
-@router.get("/{cam_id}/start", response_model=schemas.TaskOut)
+@router.get("/{cam_id}/start")
 def start_cam(
     cam_id: int,
-    session: Session = Depends(get_session),
 ) -> schemas.TaskOut:
     """starts the worker tasks for the cam
 
@@ -126,7 +130,6 @@ def start_cam(
 @router.get("/{cam_id}/stop")
 def stop_cam(
     cam_id: int,
-    session: Session = Depends(get_session),
 ):
     """Will stop all active worker tasks at the moment
 
@@ -145,10 +148,10 @@ def stop_cam(
     return "stopped"
 
 
-@router.get("/{cam_id}/frame", response_class=Response)
+@router.get("/{cam_id}/frame")
 def get_image(
     cam_id: int,
-):
+) -> Response:
     """Returns the current frame of the camera
 
     Args:
