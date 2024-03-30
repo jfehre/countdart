@@ -3,7 +3,7 @@
 import React, { type ReactElement } from "react";
 // import { getDartboards } from "./services/api";
 
-export function Home(): ReactElement {
+export default function Home(): ReactElement {
     // const [dartboards, setDartboards] = useState(null);
     // useEffect(() => {
     //     // retrieve all dartboards
