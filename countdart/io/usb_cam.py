@@ -1,9 +1,11 @@
 """Uniform wrapper for USB cameras. It is based on the v4l2py package"""
 
+import io
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List
 
 import numpy as np
+from PIL import Image
 from v4l2py import Device, iter_video_capture_devices
 
 __all__ = ["BaseCam", "USBCam"]
@@ -56,7 +58,9 @@ class USBCam(BaseCam):
         """Return frame"""
         frame = next(self.frame_iterator)
 
-        return frame.array
+        # TODO: convert to numpy array
+        img = Image.open(io.BytesIO(frame.data))
+        return np.asarray(img)
 
     @classmethod
     def get_available_cams(cls) -> List[Dict[str, Any]]:

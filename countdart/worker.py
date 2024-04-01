@@ -1,5 +1,6 @@
 """This worker module contains all celery task."""
 
+import logging
 import struct
 import time
 
@@ -30,7 +31,7 @@ def test_celery(self, string: str) -> str:
 
 
 @celery_app.task(bind=True, base=AbortableTask)
-def process_camera(self, cam: int):
+def process_camera(self, cam_hardware_id: int, cam_id: str):
     """Celery task to do the image processing of one camera.
     At the moment only a skeleton
 
@@ -41,7 +42,7 @@ def process_camera(self, cam: int):
 
     r = redis.Redis(host="redis", port=6379)
     # start camera
-    cam = USBCam(0)
+    cam = USBCam(cam_hardware_id)
     cam.start()
     # create operators
     # endless loop. Needs to be canceled by celery
@@ -49,15 +50,13 @@ def process_camera(self, cam: int):
         frame = cam.get_frame()
         # send frame
         # https://stackoverflow.com/a/60457732
+        logging.info(frame.shape)
         h, w, c = frame.shape
-        print(frame.dtype)
-        print(frame.shape)
         shape = struct.pack(">III", h, w, c)
         encoded = shape + frame.tobytes()
-        r.set("img_2", encoded)
+        r.set(f"img_{cam_id}", encoded)
 
         time.sleep(2)
-        print("Hallo")
 
     # task was aborted so shutdown gracefully
     cam.stop()

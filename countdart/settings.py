@@ -23,5 +23,9 @@ class Settings(BaseSettings):
     MONGO_DB_DATABASE: str = "dashboard"
     MONGO_DB_SERVER: MongoDsn = "mongodb://localhost:27017"
 
+    # Celery settings
+    CELERY_BROKER: str = "redis://redis:6379/0"
+    CELERY_BACKEND: str = "redis://redis:6379/1"
+
 
 settings = Settings()

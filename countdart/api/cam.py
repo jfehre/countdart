@@ -22,6 +22,21 @@ from countdart.worker import process_camera
 router = APIRouter(prefix="/cams", tags=["Camera"])
 
 
+@router.get("/find")
+def find_cams() -> List[schemas.CamHardware]:
+    """Find all available cams connected to the system
+
+    Returns:
+        List of available cams
+    """
+    cams = USBCam.get_available_cams()
+    # convert to CamHardware
+    result = []
+    for cam in cams:
+        result.append(schemas.CamHardware(**cam))
+    return result
+
+
 @router.get("", response_model_by_alias=False)
 def get_cams() -> List[schemas.Cam]:
     """Retrieve all database cams
@@ -96,25 +111,10 @@ def get_cam(cam_id: schemas.IdString) -> schemas.Cam:
     return result
 
 
-@router.get("/find")
-def find_cams() -> List[schemas.CamHardware]:
-    """Find all available cams connected to the system
-
-    Returns:
-        List of available cams
-    """
-    cams = USBCam.get_available_cams()
-    # convert to CamHardware
-    result = []
-    for cam in cams:
-        result.append(schemas.CamHardware(**cam))
-    return result
-
-
 @router.get("/{cam_id}/start")
 def start_cam(
-    cam_id: int,
-) -> schemas.TaskOut:
+    cam_id: schemas.IdString,
+) -> schemas.Cam:
     """starts the worker tasks for the cam
 
     Args:
@@ -123,14 +123,39 @@ def start_cam(
     Returns:
         schemas.TaskOut: Information about the started Task
     """
-    r = process_camera.delay(0)
-    return schemas.TaskOut.celery_to_task_out(r)
+    try:
+        cam = crud.get_cam(cam_id)
+    except NotFoundError as e:
+        raise HTTPException(404) from e
+
+    # check if cam is active and task still running
+    if cam.active:
+        r = celery_app.AsyncResult(cam.active_task)
+        if r.status == "PENDING":
+            return cam
+        elif r.status == "FAILURE":
+            cam = crud.update_cam(
+                cam_id, schemas.CamPatch(active=False, active_task=None)
+            )
+            raise HTTPException(
+                500, "Active task failed. Set cam to inactive. Retry again"
+            )
+        else:
+            cam = crud.update_cam(
+                cam_id, schemas.CamPatch(active=False, active_task=None)
+            )
+    # Start camera
+    r = process_camera.delay(cam.hardware_id, cam_id)
+    updated_cam = crud.update_cam(
+        cam_id, schemas.CamPatch(active=True, active_task=r.id)
+    )
+    return updated_cam
 
 
 @router.get("/{cam_id}/stop")
 def stop_cam(
-    cam_id: int,
-):
+    cam_id: schemas.IdString,
+) -> schemas.Cam:
     """Will stop all active worker tasks at the moment
 
     Args:
@@ -139,18 +164,22 @@ def stop_cam(
     Returns:
         schemas.TaskOut: Information about the started Task
     """
-    # get all running celery tasks and stop them
-    i = celery_app.control.inspect()
-    active_tasks = i.active()
-    for key, task in active_tasks.items():
-        res = AbortableAsyncResult(task[0]["id"], app=celery_app)
+    try:
+        cam = crud.get_cam(cam_id)
+    except NotFoundError as e:
+        raise HTTPException(404) from e
+
+    if cam.active:
+        res = AbortableAsyncResult(cam.active_task, app=celery_app)
         res.abort()
-    return "stopped"
+        cam = crud.update_cam(cam_id, schemas.CamPatch(active=False, active_task=None))
+
+    return cam
 
 
 @router.get("/{cam_id}/frame")
 def get_image(
-    cam_id: int,
+    cam_id: schemas.IdString,
 ) -> Response:
     """Returns the current frame of the camera
 
@@ -158,7 +187,7 @@ def get_image(
         cam_id (int): id of the dartboard
     """
     r = redis.Redis(host="redis", port=6379)
-    encoded = r.get("img_2")
+    encoded = r.get(f"img_{cam_id}")
     h, w, c = struct.unpack(">III", encoded[:12])
     # Add slicing here, or else the array would differ from the original
     frame = np.frombuffer(encoded[12:], dtype=np.uint8).reshape(h, w, c)

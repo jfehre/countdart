@@ -1,7 +1,7 @@
 """
 Cam schema for the database.
 """
-from typing import Optional
+from typing import Optional, Union
 
 from pydantic import ConfigDict, Field
 
@@ -22,7 +22,7 @@ class CamBase(BaseModel):
     """
 
     card_name: str
-    active: bool
+    active: bool = False
     hardware_id: int
 
 
@@ -31,6 +31,7 @@ class Cam(CamBase):
 
     id: PyObjectId = Field(alias="_id")
     model_config = ConfigDict(populate_by_name=True)
+    active_task: Union[str, None] = None
 
 
 class CamCreate(CamBase):
@@ -46,6 +47,7 @@ class CamPatch(BaseModel):
 
     card_name: Optional[str] = None
     active: Optional[bool] = None
+    active_task: Optional[Union[str, None]] = None
 
 
 class CamHardware(BaseModel):

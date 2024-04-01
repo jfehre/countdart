@@ -15,8 +15,7 @@ to start a task manager
 
 from celery import Celery
 
-CELERY_BROKER = "redis://redis:6379/0"
-CELERY_BACKEND = "db+sqlite:///db.sqlite"
+from countdart.settings import settings
 
 
 def make_celery(app_name: str) -> Celery:
@@ -30,8 +29,8 @@ def make_celery(app_name: str) -> Celery:
     """
     celery_app = Celery(
         app_name,
-        broker=CELERY_BROKER,
-        backend=CELERY_BACKEND,
+        broker=settings.CELERY_BROKER,
+        backend=settings.CELERY_BACKEND,
         include=["countdart.worker"],
     )
     return celery_app
