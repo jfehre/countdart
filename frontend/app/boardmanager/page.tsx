@@ -11,14 +11,14 @@ import { Button, Group, Modal, Stack } from "@mantine/core";
 import { IconPlus } from "@tabler/icons-react";
 
 import {
-    type DartboardProps,
+    type DartboardSchema,
     Dartboard,
 } from "../components/Dartboard/dartboard";
 import { useDisclosure } from "@mantine/hooks";
 import {
     CreateDartboardForm,
     type DartboardCreateFunction,
-    type DartboardCreateProps,
+    type DartboardCreateSchema,
 } from "../components/Dartboard/create-form";
 
 export default function Page(): ReactElement {
@@ -26,7 +26,7 @@ export default function Page(): ReactElement {
     const [createModalState, createModalHandler] = useDisclosure(false);
 
     // retrieve all dartboards
-    const [dartboards, setDartboards] = useState<DartboardProps[]>([]);
+    const [dartboards, setDartboards] = useState<DartboardSchema[]>([]);
     useEffect(() => {
         getDartboards()
             .then((response) => {
@@ -43,11 +43,11 @@ export default function Page(): ReactElement {
 
     // Create dartboard and close modal
     const createBoard: DartboardCreateFunction = (
-        values: DartboardCreateProps,
+        values: DartboardCreateSchema,
     ): void => {
         createDartboard(values)
             .then((response) => {
-                const newDartboards: DartboardProps[] = dartboards.concat(
+                const newDartboards: DartboardSchema[] = dartboards.concat(
                     response.data,
                 );
                 setDartboards(newDartboards);
@@ -66,7 +66,7 @@ export default function Page(): ReactElement {
     const deleteBoard = (key: string): void => {
         deleteDartboard(key)
             .then((response) => {
-                const newDartboards: DartboardProps[] = dartboards.filter(
+                const newDartboards: DartboardSchema[] = dartboards.filter(
                     (dartboard) => {
                         return dartboard.id !== key;
                     },
@@ -81,8 +81,6 @@ export default function Page(): ReactElement {
                 });
             });
     };
-
-    console.log(dartboards);
 
     return (
         <Stack>

@@ -1,48 +1,42 @@
-import { ActionIcon, Badge, Card, Group, Menu, Text } from "@mantine/core";
-import Link from "next/link";
+import {
+    Card,
+    Group,
+    Badge,
+    Text,
+    Menu,
+    ActionIcon,
+    Image,
+} from "@mantine/core";
 import React, { type ReactElement } from "react";
-import styles from "./Dartboard.module.css";
+import { type CamSchema } from "./camera-overview";
 import {
     IconDotsVertical,
     IconPlayerPlay,
+    IconSettings,
     IconTrash,
 } from "@tabler/icons-react";
 
-export interface DartboardSchema {
-    name: string;
-    active: boolean;
-    id: string;
-    cams: string[];
-    active_celery_tasks: string[];
-}
-
-export interface DartboardUIProps {
-    dartboard: DartboardSchema;
+export interface CameraCardProps {
+    cam: CamSchema;
     deleteFunc: (id: string) => void;
 }
 
-export function Dartboard({
-    dartboard,
-    deleteFunc,
-}: DartboardUIProps): ReactElement {
+export function CameraCard({ cam, deleteFunc }: CameraCardProps): ReactElement {
     return (
-        <Card
-            className={styles.card}
-            component={Link}
-            href={`/boardmanager/${dartboard.id}`}
-            shadow="sm"
-            padding="lg"
-            radius="md"
-            withBorder
-        >
+        <Card shadow="sm" padding="lg" radius="md" withBorder>
             <Card.Section>
-                <Group justify="space-between" m="md">
-                    <Group>
-                        <Text>{dartboard.name}</Text>
-                        <Badge color={dartboard.active ? "green" : "red"}>
-                            {dartboard.active ? "active" : "inactive"}
-                        </Badge>
-                    </Group>
+                <Image src="/images/no_image.webp" alt="preview_image" />
+            </Card.Section>
+            <Card.Section>
+                <Group
+                    justify="space-between"
+                    ml="md"
+                    mr="md"
+                    mt="md"
+                    wrap="nowrap"
+                    align="top"
+                >
+                    <Text>{cam.card_name}</Text>
                     <Menu position="bottom-end">
                         <Menu.Target>
                             <ActionIcon
@@ -59,7 +53,7 @@ export function Dartboard({
                                 color="red"
                                 leftSection={<IconTrash />}
                                 onClick={(e: React.MouseEvent) => {
-                                    deleteFunc(dartboard.id);
+                                    deleteFunc(cam.id);
                                     e.preventDefault();
                                 }}
                             >
@@ -68,9 +62,17 @@ export function Dartboard({
                         </Menu.Dropdown>
                     </Menu>
                 </Group>
+                <Group ml="md" mr="md">
+                    <Badge color={cam.active ? "green" : "red"}>
+                        {cam.active ? "active" : "inactive"}
+                    </Badge>
+                    <Badge color={cam.active ? "green" : "red"}>
+                        {cam.active ? "calibrated" : "uncalibrated"}
+                    </Badge>
+                </Group>
             </Card.Section>
-            <Card.Section>
-                <Group m="md">
+            <Card.Section mt="xl">
+                <Group justify="space-between" m="md">
                     <ActionIcon
                         onClickCapture={(e: React.MouseEvent) => {
                             e.preventDefault();
@@ -78,6 +80,14 @@ export function Dartboard({
                         variant="subtle"
                     >
                         <IconPlayerPlay />
+                    </ActionIcon>
+                    <ActionIcon
+                        onClickCapture={(e: React.MouseEvent) => {
+                            e.preventDefault();
+                        }}
+                        variant="subtle"
+                    >
+                        <IconSettings />
                     </ActionIcon>
                 </Group>
             </Card.Section>

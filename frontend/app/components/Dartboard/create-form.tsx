@@ -3,12 +3,12 @@ import { useForm } from "@mantine/form";
 import { Stack, TextInput, Button, Group } from "@mantine/core";
 
 // CreateProps. For each prop an form element should exist
-export interface DartboardCreateProps {
+export interface DartboardCreateSchema {
     name: string;
 }
 
 // Create function props which is called on submit
-export type DartboardCreateFunction = (values: DartboardCreateProps) => void;
+export type DartboardCreateFunction = (values: DartboardCreateSchema) => void;
 
 // Interface for ReactComponent CreateDartboardForm
 interface CreateDartboardFormProps {

@@ -2,8 +2,13 @@
  * Service to do all api calls with axios. Import functions when needed
  */
 import axios, { type AxiosInstance, type AxiosResponse } from "axios";
-import { type DartboardProps } from "../components/Dartboard/dartboard";
-import { type DartboardCreateProps } from "../components/Dartboard/create-form";
+import { type DartboardSchema } from "../components/Dartboard/dartboard";
+import { type DartboardCreateSchema } from "../components/Dartboard/create-form";
+import {
+    type CamHardwareSchema,
+    type CamSchema,
+} from "../components/Camera/camera-overview";
+import { type CamCreateSchema } from "../components/Camera/create-form";
 
 // Create a new Axios instance
 // TODO: get url from settings
@@ -15,7 +20,7 @@ const api: AxiosInstance = axios.create({
  * Get all Dartboards
  */
 export async function getDartboards(): Promise<
-    AxiosResponse<DartboardProps[]>
+    AxiosResponse<DartboardSchema[]>
 > {
     return await api.get("/dartboards");
 }
@@ -24,8 +29,8 @@ export async function getDartboards(): Promise<
  * Create Dartboard
  */
 export async function createDartboard(
-    data: DartboardCreateProps,
-): Promise<AxiosResponse<DartboardProps>> {
+    data: DartboardCreateSchema,
+): Promise<AxiosResponse<DartboardSchema>> {
     return await api.post("/dartboards", data);
 }
 
@@ -34,7 +39,7 @@ export async function createDartboard(
  */
 export async function getDartboard(
     id: string,
-): Promise<AxiosResponse<DartboardProps>> {
+): Promise<AxiosResponse<DartboardSchema>> {
     return await api.get("/dartboards/" + id);
 }
 
@@ -43,6 +48,40 @@ export async function getDartboard(
  */
 export async function deleteDartboard(
     id: string,
-): Promise<AxiosResponse<DartboardProps>> {
+): Promise<AxiosResponse<DartboardSchema>> {
     return await api.delete("/dartboards/" + id);
+}
+
+/**
+ * Get Cams
+ */
+export async function getCams(
+    camIds: string[] = [],
+): Promise<AxiosResponse<CamSchema[]>> {
+    return await api.get("/cams");
+}
+
+/**
+ * Get Hardware Cams
+ */
+export async function getCamsHardware(): Promise<
+    AxiosResponse<CamHardwareSchema[]>
+> {
+    return await api.get("/cams/find");
+}
+
+/**
+ * Create Cam
+ */
+export async function createCam(
+    data: CamCreateSchema,
+): Promise<AxiosResponse<CamSchema>> {
+    return await api.post("/cams", data);
+}
+
+/**
+ * Delete Cam
+ */
+export async function deleteCam(id: string): Promise<AxiosResponse<CamSchema>> {
+    return await api.delete("/cams/" + id);
 }
