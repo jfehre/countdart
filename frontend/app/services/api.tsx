@@ -3,6 +3,7 @@
  */
 import axios, { type AxiosInstance, type AxiosResponse } from "axios";
 import { type DartboardProps } from "../components/Dartboard/dartboard";
+import { type DartboardCreateProps } from "../components/Dartboard/create-form";
 
 // Create a new Axios instance
 // TODO: get url from settings
@@ -20,10 +21,28 @@ export async function getDartboards(): Promise<
 }
 
 /**
+ * Create Dartboard
+ */
+export async function createDartboard(
+    data: DartboardCreateProps,
+): Promise<AxiosResponse<DartboardProps>> {
+    return await api.post("/dartboards", data);
+}
+
+/**
  * Get Dartboard
  */
 export async function getDartboard(
     id: string,
 ): Promise<AxiosResponse<DartboardProps>> {
     return await api.get("/dartboards/" + id);
+}
+
+/**
+ * Delete Dartboard
+ */
+export async function deleteDartboard(
+    id: string,
+): Promise<AxiosResponse<DartboardProps>> {
+    return await api.delete("/dartboards/" + id);
 }
