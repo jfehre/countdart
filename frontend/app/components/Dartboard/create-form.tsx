@@ -1,20 +1,26 @@
 import React, { type ReactElement } from "react";
 import { useForm } from "@mantine/form";
 import { Stack, TextInput, Button, Group } from "@mantine/core";
+import { type DartboardCreateSchema } from "@/app/types/schemas";
 
-// CreateProps. For each prop an form element should exist
-export interface DartboardCreateSchema {
-    name: string;
-}
-
-// Create function props which is called on submit
+/**
+ * Create function props which is called on submit
+ */
 export type DartboardCreateFunction = (values: DartboardCreateSchema) => void;
 
-// Interface for ReactComponent CreateDartboardForm
+/**
+ * Properties for CreateDartboardForm
+ */
 interface CreateDartboardFormProps {
     submit: DartboardCreateFunction;
 }
 
+/**
+ * Component which shows a new form to create a Dartboard in the api
+ * with the given submit function
+ * @param param0 submit function
+ * @returns component with the create form
+ */
 export function CreateDartboardForm({
     submit,
 }: CreateDartboardFormProps): ReactElement {

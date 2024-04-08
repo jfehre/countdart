@@ -1,33 +1,30 @@
 import React, { type ReactElement, useEffect, useState } from "react";
-import { type DartboardSchema } from "../Dartboard/dartboard";
 import { createCam, deleteCam, getCams } from "@/app/services/api";
 import { notifications } from "@mantine/notifications";
 import { Button, Group, Modal, SimpleGrid, Stack } from "@mantine/core";
 import { CameraCard } from "./camera-card";
 import { IconPlus } from "@tabler/icons-react";
 import { useDisclosure } from "@mantine/hooks";
+import { CreateCamForm, type CamCreateFunction } from "./create-form";
 import {
-    CreateCamForm,
-    type CamCreateFunction,
     type CamCreateSchema,
-} from "./create-form";
+    type CamSchema,
+    type DartboardSchema,
+} from "@/app/types/schemas";
 
-export interface CamSchema {
-    card_name: string;
-    active: boolean;
-    hardware_id: number;
-    id: string;
-}
-
-export interface CamHardwareSchema {
-    card_name: string;
-    hardware_id: number;
-}
-
+/**
+ * Properties for CamOverview
+ */
 export interface CameraOverviewProps {
     dartboard: DartboardSchema | undefined;
 }
 
+/**
+ * Component to show all cameras of given dartboard.
+ * For each camera one CameraCard is created and shown in a grid.
+ * @param param0 dartboard schema
+ * @returns React component
+ */
 export function CameraOverview({
     dartboard,
 }: CameraOverviewProps): ReactElement {

@@ -7,24 +7,26 @@ import {
     IconPlayerPlay,
     IconTrash,
 } from "@tabler/icons-react";
+import { type DartboardSchema } from "@/app/types/schemas";
 
-export interface DartboardSchema {
-    name: string;
-    active: boolean;
-    id: string;
-    cams: string[];
-    active_celery_tasks: string[];
-}
-
-export interface DartboardUIProps {
+/**
+ * Properties for Dartboard component
+ */
+export interface DartboardProps {
     dartboard: DartboardSchema;
     deleteFunc: (id: string) => void;
 }
 
+/**
+ * Component for Dartboard. Will show each dartboard and its information and
+ * details in a card.
+ * @param param0 dartboard and delete function
+ * @returns React Card Component
+ */
 export function Dartboard({
     dartboard,
     deleteFunc,
-}: DartboardUIProps): ReactElement {
+}: DartboardProps): ReactElement {
     return (
         <Card
             className={styles.card}
@@ -36,6 +38,7 @@ export function Dartboard({
             withBorder
         >
             <Card.Section>
+                {/* Header with name and menu */}
                 <Group justify="space-between" m="md">
                     <Group>
                         <Text>{dartboard.name}</Text>
@@ -70,6 +73,7 @@ export function Dartboard({
                 </Group>
             </Card.Section>
             <Card.Section>
+                {/* Footer with start stop button */}
                 <Group m="md">
                     <ActionIcon
                         onClickCapture={(e: React.MouseEvent) => {

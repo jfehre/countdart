@@ -1,7 +1,6 @@
 """This worker module contains all celery task."""
 
 import logging
-import struct
 import time
 
 from celery.contrib.abortable import AbortableTask
@@ -9,6 +8,7 @@ from celery.utils.log import get_task_logger
 
 from countdart.celery_app import celery_app
 from countdart.io import USBCam
+from countdart.utils.misc import encode_numpy
 
 logger = get_task_logger(__name__)
 
@@ -49,14 +49,9 @@ def process_camera(self, cam_hardware_id: int, cam_id: str):
     while not self.is_aborted():
         frame = cam.get_frame()
         # send frame
-        # https://stackoverflow.com/a/60457732
         logging.info(frame.shape)
-        h, w, c = frame.shape
-        shape = struct.pack(">III", h, w, c)
-        encoded = shape + frame.tobytes()
+        encoded = encode_numpy(frame)
         r.set(f"img_{cam_id}", encoded)
-
-        time.sleep(2)
 
     # task was aborted so shutdown gracefully
     cam.stop()

@@ -12,14 +12,23 @@ from countdart.database.db import NameAlreadyTakenError, NotFoundError, database
 collection = database["cams"]
 
 
-def get_cams() -> List[schemas.Cam]:
+def get_cams(id_list: List[schemas.IdString] = None) -> List[schemas.Cam]:
     """
     Retrieve all cams from the database.
+
+    Args:
+        id_list: List of ids to return
 
     Returns:
         List of cams
     """
-    result = collection.find()
+    _filter = {}
+    if id_list is not None:
+        # Check for empty strings, because frontend will send empty string on purpose
+        _filter = {
+            "_id": {"$in": [ObjectId(_id) if _id != "" else None for _id in id_list]}
+        }
+    result = collection.find(_filter)
     return [schemas.Cam(**r) for r in result]
 
 
@@ -27,7 +36,7 @@ def create_cam(cam: schemas.CamCreate) -> schemas.Cam:
     """Create a new cam from cam model and save in database
 
     Args:
-        cam: sqlmodel of cam to create
+        cam: model of cam to create
 
     Returns:
         created cam

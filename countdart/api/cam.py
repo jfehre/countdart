@@ -2,14 +2,21 @@
 Used to retrieve, create, update and delete dartboards
 """
 
+import asyncio
+import base64
 import io
-import struct
 from typing import List
 
-import numpy as np
 import redis
 from celery.contrib.abortable import AbortableAsyncResult
-from fastapi import APIRouter, HTTPException, Response
+from fastapi import (
+    APIRouter,
+    HTTPException,
+    Query,
+    Response,
+    WebSocket,
+    WebSocketDisconnect,
+)
 from PIL import Image
 
 from countdart.celery_app import celery_app
@@ -17,9 +24,41 @@ from countdart.database import schemas
 from countdart.database.crud import cam as crud
 from countdart.database.db import NameAlreadyTakenError, NotFoundError
 from countdart.io import USBCam
+from countdart.utils.misc import decode_numpy
 from countdart.worker import process_camera
 
 router = APIRouter(prefix="/cams", tags=["Camera"])
+
+
+@router.websocket("/ws/{cam_id}/live")
+async def websocket_endpoint(cam_id: schemas.IdString, websocket: WebSocket):
+    await websocket.accept()
+    encoded_array = None
+    try:
+        while True:
+            # Add this statement to yield back control to allow
+            # context switch and serve multiple request concurrently
+            # not working
+            await asyncio.sleep(0)
+            # Get current values from key
+            r = redis.Redis(host="redis", port=6379)
+            encoded = r.get(f"img_{cam_id}")
+            # check if value changed, otherwise no update needs to be send
+            if encoded_array == encoded:
+                continue
+            else:
+                encoded_array = encoded
+            # decode numpy array to base64 string
+            frame = decode_numpy(encoded_array)
+            img = Image.fromarray(frame)
+            with io.BytesIO() as buf:
+                img.save(buf, format="JPEG")
+                im_bytes = buf.getvalue()
+                base64_str = base64.b64encode(im_bytes).decode("utf-8")
+            # send with websocket
+            await websocket.send_text(base64_str)
+    except WebSocketDisconnect:
+        pass
 
 
 @router.get("/find")
@@ -38,14 +77,20 @@ def find_cams() -> List[schemas.CamHardware]:
 
 
 @router.get("", response_model_by_alias=False)
-def get_cams() -> List[schemas.Cam]:
+def get_cams(
+    id_list: List[schemas.IdString] = Query(None),
+) -> List[schemas.Cam]:
     """Retrieve all database cams
+
+    Args:
+        id_list (List[schemas.IdString], optional):
+        If given only return cams within this list.
 
     Returns:
         List of cams
     """
     try:
-        result = crud.get_cams()
+        result = crud.get_cams(id_list=id_list)
     except NotFoundError as e:
         raise HTTPException(404) from e
     return result
@@ -54,6 +99,9 @@ def get_cams() -> List[schemas.Cam]:
 @router.post("", response_model_by_alias=False)
 def create_cam(cam: schemas.CamCreate) -> schemas.Cam:
     """Create new cam
+
+    Args:
+        cam_id (schemas.IdString): id of the dartboard
 
     Returns:
         Created cam
@@ -72,6 +120,9 @@ def update_cam(
 ) -> schemas.Cam:
     """Retrieve cam with given id
 
+    Args:
+        cam_id (schemas.IdString): id of the dartboard
+
     Returns:
         cam with given id
     """
@@ -88,6 +139,9 @@ def delete_cam(
 ):
     """Delete cam with given id
 
+    Args:
+        cam_id (schemas.IdString): id of the dartboard
+
     Returns:
         cam with given id
     """
@@ -100,6 +154,9 @@ def delete_cam(
 @router.get("/{cam_id}", response_model_by_alias=False)
 def get_cam(cam_id: schemas.IdString) -> schemas.Cam:
     """Retrieve cam with given id
+
+    Args:
+        cam_id (schemas.IdString): id of the dartboard
 
     Returns:
         Cam with given id
@@ -118,7 +175,7 @@ def start_cam(
     """starts the worker tasks for the cam
 
     Args:
-        session (Session, optional): sql session. Defaults to Depends(get_session).
+        cam_id (schemas.IdString): id of the dartboard
 
     Returns:
         schemas.TaskOut: Information about the started Task
@@ -159,7 +216,7 @@ def stop_cam(
     """Will stop all active worker tasks at the moment
 
     Args:
-        session (Session, optional): sql session. Defaults to Depends(get_session).
+        cam_id (schemas.IdString): id of the dartboard
 
     Returns:
         schemas.TaskOut: Information about the started Task
@@ -184,13 +241,11 @@ def get_image(
     """Returns the current frame of the camera
 
     Args:
-        cam_id (int): id of the dartboard
+        cam_id (schemas.IdString): id of the dartboard
     """
     r = redis.Redis(host="redis", port=6379)
     encoded = r.get(f"img_{cam_id}")
-    h, w, c = struct.unpack(">III", encoded[:12])
-    # Add slicing here, or else the array would differ from the original
-    frame = np.frombuffer(encoded[12:], dtype=np.uint8).reshape(h, w, c)
+    frame = decode_numpy(encoded)
     img = Image.fromarray(frame)
     with io.BytesIO() as buf:
         img.save(buf, format="PNG")

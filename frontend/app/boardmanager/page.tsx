@@ -10,16 +10,16 @@ import { notifications } from "@mantine/notifications";
 import { Button, Group, Modal, Stack } from "@mantine/core";
 import { IconPlus } from "@tabler/icons-react";
 
-import {
-    type DartboardSchema,
-    Dartboard,
-} from "../components/Dartboard/dartboard";
+import { Dartboard } from "../components/Dartboard/dartboard";
 import { useDisclosure } from "@mantine/hooks";
 import {
     CreateDartboardForm,
     type DartboardCreateFunction,
-    type DartboardCreateSchema,
 } from "../components/Dartboard/create-form";
+import {
+    type DartboardCreateSchema,
+    type DartboardSchema,
+} from "../types/schemas";
 
 export default function Page(): ReactElement {
     // Create modal state

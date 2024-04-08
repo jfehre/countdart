@@ -2,13 +2,13 @@
  * Service to do all api calls with axios. Import functions when needed
  */
 import axios, { type AxiosInstance, type AxiosResponse } from "axios";
-import { type DartboardSchema } from "../components/Dartboard/dartboard";
-import { type DartboardCreateSchema } from "../components/Dartboard/create-form";
 import {
+    type CamCreateSchema,
     type CamHardwareSchema,
     type CamSchema,
-} from "../components/Camera/camera-overview";
-import { type CamCreateSchema } from "../components/Camera/create-form";
+    type DartboardCreateSchema,
+    type DartboardSchema,
+} from "../types/schemas";
 
 // Create a new Axios instance
 // TODO: get url from settings
@@ -53,12 +53,25 @@ export async function deleteDartboard(
 }
 
 /**
- * Get Cams
+ * Get Cams. Optional parameter contains list of all cam ids
+ * to specify which cams should be returned.
+ * If the list is empty send a request with [""]
  */
 export async function getCams(
-    camIds: string[] = [],
+    camIds: string[] | undefined = undefined,
 ): Promise<AxiosResponse<CamSchema[]>> {
-    return await api.get("/cams");
+    if (camIds === undefined) {
+        return await api.get("/cams");
+    } else {
+        // add empty string if no camids given
+        if (camIds.length === 0) {
+            camIds = [""];
+        }
+        return await api.get("/cams", {
+            params: { id_list: camIds },
+            paramsSerializer: { indexes: null },
+        });
+    }
 }
 
 /**
@@ -84,4 +97,18 @@ export async function createCam(
  */
 export async function deleteCam(id: string): Promise<AxiosResponse<CamSchema>> {
     return await api.delete("/cams/" + id);
+}
+
+/**
+ * Start Cam
+ */
+export async function startCam(id: string): Promise<AxiosResponse<CamSchema>> {
+    return await api.get("/cams/" + id + "/start");
+}
+
+/**
+ * Stop Cam
+ */
+export async function stopCam(id: string): Promise<AxiosResponse<CamSchema>> {
+    return await api.get("/cams/" + id + "/stop");
 }

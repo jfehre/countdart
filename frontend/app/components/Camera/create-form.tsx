@@ -2,23 +2,29 @@ import React, { useEffect, type ReactElement, useState } from "react";
 import { useForm } from "@mantine/form";
 import { Stack, Button, Group, NativeSelect } from "@mantine/core";
 import { getCamsHardware } from "@/app/services/api";
-import { type CamHardwareSchema } from "./camera-overview";
 import { notifications } from "@mantine/notifications";
+import {
+    type CamCreateSchema,
+    type CamHardwareSchema,
+} from "@/app/types/schemas";
 
-// CreateProps. For each prop an form element should exist
-export interface CamCreateSchema {
-    card_name: string;
-    hardware_id: number;
-}
-
-// Create function props which is called on submit
+/**
+ * Create function props which is called on submit
+ */
 export type CamCreateFunction = (values: CamCreateSchema) => void;
 
-// Interface for ReactComponent CreateDartboardForm
+/**
+ * Properties for CreateCamForm
+ */
 interface CreateCamFormProps {
     submit: CamCreateFunction;
 }
 
+/**
+ * Form to create a new camera
+ * @param param0 submit function
+ * @returns React form
+ */
 export function CreateCamForm({ submit }: CreateCamFormProps): ReactElement {
     // create mantine form
     const form = useForm({

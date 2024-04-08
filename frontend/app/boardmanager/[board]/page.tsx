@@ -1,11 +1,11 @@
 "use client";
 
 import { getDartboard } from "../../services/api";
-import { type DartboardSchema } from "../../components/Dartboard/dartboard";
 import React, { type ReactElement, useEffect, useState } from "react";
 import { notifications } from "@mantine/notifications";
 import { Stack, Tabs } from "@mantine/core";
 import { CameraOverview } from "@/app/components/Camera/camera-overview";
+import { type DartboardSchema } from "@/app/types/schemas";
 
 export default function Page({
     params,
