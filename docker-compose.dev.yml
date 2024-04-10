@@ -5,6 +5,8 @@ services:
     build:
       context: .
       target: dev
+    ports:
+      - 7878:7878
     # we need privilege to access host usb devices like cameras
     privileged: true
     volumes:
@@ -17,7 +19,7 @@ services:
     environment:
       - MONGO_DB_SERVER=mongodb://mongodb:27017
   mongodb:
-    image: mongo:6-jammy
+    image: mongo:4.4.8
     restart: always
     ports:
       - 27017:27017
@@ -47,6 +49,8 @@ services:
     build:
       context: .
       dockerfile: ./frontend/Dockerfile
+    ports:
+      - 3000:3000
     volumes:
       - ./:/app
     # Overrides default command so things don't shut down after the process ends.

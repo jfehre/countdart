@@ -41,7 +41,10 @@ export default function Page({
 
                 <Tabs.Panel value="overview">No overview content</Tabs.Panel>
                 <Tabs.Panel value="cameras">
-                    <CameraOverview dartboard={dartboard}></CameraOverview>
+                    <CameraOverview
+                        dartboard={dartboard}
+                        setDartboard={setDartboard}
+                    ></CameraOverview>
                 </Tabs.Panel>
                 <Tabs.Panel value="settings">No settings content</Tabs.Panel>
                 <Tabs.Panel value="calibration">

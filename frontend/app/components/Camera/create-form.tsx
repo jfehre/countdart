@@ -4,6 +4,7 @@ import { Stack, Button, Group, NativeSelect } from "@mantine/core";
 import { getCamsHardware } from "@/app/services/api";
 import { notifications } from "@mantine/notifications";
 import {
+    type CamSchema,
     type CamCreateSchema,
     type CamHardwareSchema,
 } from "@/app/types/schemas";
@@ -18,6 +19,7 @@ export type CamCreateFunction = (values: CamCreateSchema) => void;
  */
 interface CreateCamFormProps {
     submit: CamCreateFunction;
+    existingCams: CamSchema[];
 }
 
 /**
@@ -25,7 +27,10 @@ interface CreateCamFormProps {
  * @param param0 submit function
  * @returns React form
  */
-export function CreateCamForm({ submit }: CreateCamFormProps): ReactElement {
+export function CreateCamForm({
+    submit,
+    existingCams,
+}: CreateCamFormProps): ReactElement {
     // create mantine form
     const form = useForm({
         initialValues: {
@@ -39,7 +44,33 @@ export function CreateCamForm({ submit }: CreateCamFormProps): ReactElement {
     useEffect(() => {
         getCamsHardware()
             .then((response) => {
-                setHardwareCams(response.data);
+                let newHardwareCams = response.data;
+                // remove all hardware cams with same hardware id as in existing cams
+                const existingHardwareIds = existingCams.map(
+                    (cam) => cam.hardware_id,
+                );
+                newHardwareCams = newHardwareCams.filter((hardwareCam) => {
+                    return !existingHardwareIds.includes(
+                        hardwareCam.hardware_id,
+                    );
+                });
+                console.log(newHardwareCams);
+                // check if cams are not undefined and more than 0
+                if (
+                    newHardwareCams !== undefined &&
+                    newHardwareCams.length > 0
+                ) {
+                    // set cams
+                    setHardwareCams(newHardwareCams);
+                    // set initial value
+                    form.setValues({
+                        card_name:
+                            newHardwareCams[0].card_name +
+                            " " +
+                            newHardwareCams[0].hardware_id,
+                        hardware_id: newHardwareCams[0].hardware_id,
+                    });
+                }
             })
             .catch((error) => {
                 notifications.show({
@@ -53,18 +84,22 @@ export function CreateCamForm({ submit }: CreateCamFormProps): ReactElement {
     // submit wrapper to add other values into data
     // based on selected cam
     const submitWrapper = (values: CamCreateSchema): void => {
+        // find hardware cam from native select value
         const chosenCam = hardwareCams.find(
-            (hardwareCam) => hardwareCam.card_name === values.card_name,
+            (hardwareCam) =>
+                hardwareCam.card_name + " " + hardwareCam.hardware_id ===
+                values.card_name,
         );
         if (chosenCam === undefined) {
             notifications.show({
                 title: "Something went wrong",
-                message:
-                    "The chosen hardware camera is not in the initial list",
+                message: `The chosen hardware camera ${values.card_name} is not in the initial list`,
                 color: "red",
             });
             return;
         }
+        // update values with hardware cam
+        values.card_name = chosenCam.card_name;
         values.hardware_id = chosenCam.hardware_id;
         submit(values);
     };
@@ -75,7 +110,12 @@ export function CreateCamForm({ submit }: CreateCamFormProps): ReactElement {
                 <NativeSelect
                     label="Camera"
                     data={hardwareCams.map((hardwareCam) => {
-                        return hardwareCam.card_name;
+                        // use card name + hardware id as value
+                        return (
+                            hardwareCam.card_name +
+                            " " +
+                            hardwareCam.hardware_id
+                        );
                     })}
                     {...form.getInputProps("card_name")}
                 />

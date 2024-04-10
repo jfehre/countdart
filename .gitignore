@@ -5,6 +5,9 @@ notebooks/
 countdart/operators/
 db.sqlite
 
+# private files which i dont want to upload
+.vscode/sftp.json
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

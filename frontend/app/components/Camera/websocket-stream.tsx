@@ -13,7 +13,6 @@ export function WebSocketStream({
     // base64 image
     const [image, setImage] = useState("/images/no_image.webp");
     const url: string = `ws://localhost:7878/api/v1/cams/ws/${camId}/live`;
-    console.log(url);
 
     useEffect(() => {
         const ws = new WebSocket(url);
@@ -40,7 +39,7 @@ export function WebSocketStream({
                 src={image}
                 alt={"Live feed"}
                 fill
-                objectFit="contain"
+                style={{ objectFit: "contain" }}
             ></Image>
         </div>
     );

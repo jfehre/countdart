@@ -27,6 +27,7 @@ dependencies = [
     "v4l2py",
     "pymongo",
     "pydantic-settings",
+    "websockets",
 ]
 dynamic = ["version"]
 

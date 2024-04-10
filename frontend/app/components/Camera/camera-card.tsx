@@ -85,7 +85,10 @@ export function CameraCard({ cam, deleteFunc }: CameraCardProps): ReactElement {
                     wrap="nowrap"
                     align="top"
                 >
-                    <Text>{cam.card_name}</Text>
+                    <Group gap="xs">
+                        <Text>{cam.card_name}</Text>
+                        <Text>{cam.hardware_id} </Text>
+                    </Group>
                     <Menu position="bottom-end">
                         <Menu.Target>
                             <ActionIcon

@@ -3,6 +3,7 @@
  */
 import axios, { type AxiosInstance, type AxiosResponse } from "axios";
 import {
+    type DartboardPatchSchema,
     type CamCreateSchema,
     type CamHardwareSchema,
     type CamSchema,
@@ -32,6 +33,19 @@ export async function createDartboard(
     data: DartboardCreateSchema,
 ): Promise<AxiosResponse<DartboardSchema>> {
     return await api.post("/dartboards", data);
+}
+
+/**
+ * Patch Dartboard
+ */
+export async function patchDartboard(
+    id: string | undefined,
+    data: DartboardPatchSchema,
+): Promise<AxiosResponse<DartboardSchema>> {
+    if (id === undefined) {
+        throw Error("Dartboard id is undefined");
+    }
+    return await api.patch("/dartboards/" + id, data);
 }
 
 /**

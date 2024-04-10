@@ -1,5 +1,10 @@
 import React, { type ReactElement, useEffect, useState } from "react";
-import { createCam, deleteCam, getCams } from "@/app/services/api";
+import {
+    createCam,
+    deleteCam,
+    getCams,
+    patchDartboard,
+} from "@/app/services/api";
 import { notifications } from "@mantine/notifications";
 import { Button, Group, Modal, SimpleGrid, Stack } from "@mantine/core";
 import { CameraCard } from "./camera-card";
@@ -7,6 +12,7 @@ import { IconPlus } from "@tabler/icons-react";
 import { useDisclosure } from "@mantine/hooks";
 import { CreateCamForm, type CamCreateFunction } from "./create-form";
 import {
+    type DartboardPatchSchema,
     type CamCreateSchema,
     type CamSchema,
     type DartboardSchema,
@@ -17,6 +23,7 @@ import {
  */
 export interface CameraOverviewProps {
     dartboard: DartboardSchema | undefined;
+    setDartboard: (dartboard: DartboardSchema) => void;
 }
 
 /**
@@ -27,6 +34,7 @@ export interface CameraOverviewProps {
  */
 export function CameraOverview({
     dartboard,
+    setDartboard,
 }: CameraOverviewProps): ReactElement {
     // Create modal state
     const [createModalState, createModalHandler] = useDisclosure(false);
@@ -54,6 +62,24 @@ export function CameraOverview({
             .then((response) => {
                 const newCams: CamSchema[] = cams.concat(response.data);
                 setCams(newCams);
+                // patch dartboard
+                const patchData: DartboardPatchSchema = {
+                    cams: newCams.map((cam) => cam.id),
+                    name: undefined,
+                    active: undefined,
+                    active_celery_tasks: undefined,
+                };
+                patchDartboard(dartboard?.id, patchData)
+                    .then((response) => {
+                        setDartboard(response.data);
+                    })
+                    .catch((error) => {
+                        notifications.show({
+                            title: "Patch error",
+                            message: "Could not patch Dartboard: " + error,
+                            color: "red",
+                        });
+                    });
             })
             .catch((error) => {
                 notifications.show({
@@ -62,6 +88,7 @@ export function CameraOverview({
                     color: "red",
                 });
             });
+
         createModalHandler.close();
     };
 
@@ -73,6 +100,24 @@ export function CameraOverview({
                     return cam.id !== key;
                 });
                 setCams(newCams);
+                // Patch Dartboard
+                const patchData: DartboardPatchSchema = {
+                    cams: newCams.map((cam) => cam.id),
+                    name: undefined,
+                    active: undefined,
+                    active_celery_tasks: undefined,
+                };
+                patchDartboard(dartboard?.id, patchData)
+                    .then((response) => {
+                        setDartboard(response.data);
+                    })
+                    .catch((error) => {
+                        notifications.show({
+                            title: "Patch error",
+                            message: "Could not patch Dartboard: " + error,
+                            color: "red",
+                        });
+                    });
             })
             .catch((error) => {
                 notifications.show({
@@ -98,7 +143,7 @@ export function CameraOverview({
                     title="Add Camera"
                     centered
                 >
-                    <CreateCamForm submit={createCamFunc} />
+                    <CreateCamForm submit={createCamFunc} existingCams={cams} />
                 </Modal>
             </Group>
             <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} m="md">

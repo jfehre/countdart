@@ -10,6 +10,13 @@ export interface DartboardCreateSchema {
     name: string;
 }
 
+export interface DartboardPatchSchema {
+    name: string | undefined;
+    active: boolean | undefined;
+    cams: string[] | undefined;
+    active_celery_tasks: string[] | undefined;
+}
+
 export interface CamSchema {
     card_name: string;
     active: boolean;
