@@ -12,6 +12,7 @@ export interface Shape {
     x: number;
     y: number;
     radius: number;
+    label: string;
 }
 
 /**
@@ -63,7 +64,7 @@ const CalibrationCanvas = forwardRef<
 
     // define 4 targets/shapes from camera
     const targets: Shape[] = [];
-    targets.push({ x: 0.1, y: 0.1, radius: 0.02 });
+    targets.push({ x: 0.1, y: 0.1, radius: 0.01, label: "20 | 1" });
 
     // drag related vars
     let isDragging = false;
@@ -209,7 +210,6 @@ const CalibrationCanvas = forwardRef<
         ctx = canvasRef.current?.getContext("2d");
         zoom = zoomRef.current;
         zoomCtx = zoomRef.current?.getContext("2d");
-        console.log(ctx);
         if (ctx !== null && ctx !== undefined && canvas !== null) {
             // onload function (Should be called one time on load)
             img.onload = () => {
@@ -334,15 +334,24 @@ const drawShapesScaled = (
     const canvas = ctx.canvas;
     for (let i = 0; i < shapes.length; i++) {
         const shape = shapes[i];
-        ctx.beginPath();
-        ctx.arc(
-            shape.x * canvas.width,
-            shape.y * canvas.height,
-            shape.radius * canvas.width,
-            0,
-            Math.PI * 2,
+        const x = shape.x * canvas.width;
+        const y = shape.y * canvas.height;
+        const r = shape.radius * canvas.width;
+        ctx.strokeStyle = "red";
+        ctx.lineWidth = 2;
+        ctx.stroke(
+            new Path2D(
+                `M${x} ${y}m-${r} 0
+                a ${r} ${r} 0 1 0 ${r * 2} 0
+                a ${r} ${r} 0 1 0 ${-r * 2} 0`,
+            ),
         );
-        ctx.fillStyle = "f000000";
-        ctx.fill();
+        ctx.stroke(new Path2D(`M${x} ${y + 1}l0 4`));
+        ctx.stroke(new Path2D(`M${x} ${y - 1}l0 -4`));
+        ctx.stroke(new Path2D(`M${x + 1} ${y}l4 0`));
+        ctx.stroke(new Path2D(`M${x - 1} ${y}l-4 0`));
+        ctx.fillStyle = "red";
+        const textProps = ctx.measureText(shape.label);
+        ctx.fillText(shape.label, x - 0.5 * textProps.width, y - r - 5);
     }
 };
