@@ -1,7 +1,10 @@
 import { type CamSchema } from "@/app/types/schemas";
 import { Modal } from "@mantine/core";
-import React, { type ReactElement } from "react";
-import { CalibrationCanvas } from "./calibration-canvas";
+import React, { useRef, type ReactElement } from "react";
+import {
+    CalibrationCanvas,
+    type CalibrationCanvasHandle,
+} from "./calibration-canvas";
 
 export interface CalibrationModalProps {
     opened: boolean;
@@ -14,6 +17,8 @@ export function CalibrationModal({
     onClose,
     cam,
 }: CalibrationModalProps): ReactElement {
+    const childRef = useRef<CalibrationCanvasHandle>(null);
+
     return (
         <Modal
             opened={opened}
@@ -21,8 +26,12 @@ export function CalibrationModal({
             keepMounted={false}
             title="Calibration View"
             size={"80%"}
+            lockScroll={false}
+            onScrollCapture={(e) => {
+                childRef.current?.handleScroll();
+            }}
         >
-            <CalibrationCanvas cam={cam} />
+            <CalibrationCanvas cam={cam} ref={childRef} />
         </Modal>
     );
 }
