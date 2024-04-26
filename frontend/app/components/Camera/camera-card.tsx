@@ -1,7 +1,16 @@
-import { Card, Group, Badge, Text, Menu, ActionIcon } from "@mantine/core";
+import {
+    Card,
+    Group,
+    Badge,
+    Text,
+    Menu,
+    ActionIcon,
+    Tooltip,
+} from "@mantine/core";
 import React, { useState, type ReactElement } from "react";
 import {
     IconDotsVertical,
+    IconFocus2,
     IconPlayerPlay,
     IconPlayerStop,
     IconSettings,
@@ -11,6 +20,8 @@ import { WebSocketStream } from "./websocket-stream";
 import { startCam, stopCam } from "@/app/services/api";
 import { notifications } from "@mantine/notifications";
 import { type CamSchema } from "@/app/types/schemas";
+import { CalibrationModal } from "./calibration-modal";
+import { useDisclosure } from "@mantine/hooks";
 
 /**
  * Properties for the CameraCard
@@ -27,6 +38,8 @@ export interface CameraCardProps {
  */
 export function CameraCard({ cam, deleteFunc }: CameraCardProps): ReactElement {
     const [isActive, setIsActive] = useState(cam.active);
+
+    const [calibrateModalState, calibrateModalHandler] = useDisclosure(false);
 
     // Function to start camera via api. On error notification is shown
     const startCamFunc = (): void => {
@@ -142,16 +155,33 @@ export function CameraCard({ cam, deleteFunc }: CameraCardProps): ReactElement {
                             display={isActive ? "block" : "None"}
                         />
                     </ActionIcon>
-                    <ActionIcon
-                        onClickCapture={(e: React.MouseEvent) => {
-                            e.preventDefault();
-                        }}
-                        variant="subtle"
-                    >
-                        <IconSettings />
-                    </ActionIcon>
+                    <Group>
+                        <ActionIcon
+                            onClick={calibrateModalHandler.open}
+                            variant="subtle"
+                        >
+                            <Tooltip label="Calibrate" position="bottom">
+                                <IconFocus2 />
+                            </Tooltip>
+                        </ActionIcon>
+                        <ActionIcon
+                            onClick={(e: React.MouseEvent) => {
+                                e.preventDefault();
+                            }}
+                            variant="subtle"
+                        >
+                            <Tooltip label="Settings" position="bottom">
+                                <IconSettings />
+                            </Tooltip>
+                        </ActionIcon>
+                    </Group>
                 </Group>
             </Card.Section>
+            <CalibrationModal
+                opened={calibrateModalState}
+                onClose={calibrateModalHandler.close}
+                cam={cam}
+            />
         </Card>
     );
 }
