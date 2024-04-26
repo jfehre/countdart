@@ -49,6 +49,11 @@ const CalibrationCanvas = forwardRef<
     // will be updated onScroll of parent and on resize of the window
     let offset = new DOMRect();
 
+    // Set image
+    // TODO: get this image later from parent
+    const img = new Image();
+    img.src = "http://astrobioloblog.files.wordpress.com/2011/10/duck-1.jpg";
+
     // define canvas variables, but do not initialize
     // initialize it in the useEffect hook
     let canvas: HTMLCanvasElement | null;
@@ -58,7 +63,7 @@ const CalibrationCanvas = forwardRef<
 
     // define 4 targets/shapes from camera
     const targets: Shape[] = [];
-    targets.push({ x: 30, y: 30, radius: 20 });
+    targets.push({ x: 0.1, y: 0.1, radius: 0.02 });
 
     // drag related vars
     let isDragging = false;
@@ -67,24 +72,24 @@ const CalibrationCanvas = forwardRef<
     let selectedShapeIndex: number;
 
     // redraw targets/shapes and the image
-    const drawShapes = (): void => {
+    const updateCanvas = (): void => {
         if (ctx !== null && ctx !== undefined && canvas !== null) {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(img, 0, 0);
-            for (let i = 0; i < targets.length; i++) {
-                const shape = targets[i];
-                ctx.beginPath();
-                ctx.arc(shape.x, shape.y, shape.radius, 0, Math.PI * 2);
-                ctx.fillStyle = "f000000";
-                ctx.fill();
-            }
+            drawImageScaled(img, ctx);
+            drawShapesScaled(targets, ctx);
         }
     };
 
     // resize event to update offset
     const handleResize = (): void => {
-        if (canvas !== null) {
+        if (canvas !== null && wrapperRef.current !== null) {
+            // calculate new canvas size based on wrapper
+            canvas.width = wrapperRef.current.clientWidth - 10;
+            const imgRatio = img.height / img.width;
+            canvas.height = canvas.width * imgRatio;
+            // update offset
             offset = canvas.getBoundingClientRect();
+            updateCanvas();
         }
     };
     // scroll event to set offset
@@ -99,17 +104,18 @@ const CalibrationCanvas = forwardRef<
 
     // dragging events to move targets/shapes
     const handleMouseDown = (e: MouseEvent): void => {
-        console.log("Mousedown");
-        e.preventDefault();
-        e.stopPropagation();
-        startX = e.clientX - offset.left;
-        startY = e.clientY - offset.top;
-        // check if mouse is inside shape
-        for (let i = 0; i < targets.length; i++) {
-            if (isInsideShape(startX, startY, targets[i])) {
-                selectedShapeIndex = i;
-                isDragging = true;
-                return;
+        if (canvas !== null) {
+            e.preventDefault();
+            e.stopPropagation();
+            startX = e.clientX - offset.left;
+            startY = e.clientY - offset.top;
+            // check if mouse is inside shape
+            for (let i = 0; i < targets.length; i++) {
+                if (isInsideShape(startX, startY, targets[i], canvas)) {
+                    selectedShapeIndex = i;
+                    isDragging = true;
+                    return;
+                }
             }
         }
     };
@@ -127,23 +133,28 @@ const CalibrationCanvas = forwardRef<
         if (!isDragging) {
             return;
         }
-        e.preventDefault();
-        e.stopPropagation();
-        // calculate the current mouse position
-        const mouseX = e.clientX - offset.left;
-        const mouseY = e.clientY - offset.top;
-        // how far has the mouse dragged from its previous mousemove position?
-        const dx = mouseX - startX;
-        const dy = mouseY - startY;
-        // move the selected shape by the drag distance
-        const selectedShape = targets[selectedShapeIndex];
-        selectedShape.x += dx;
-        selectedShape.y += dy;
-        // clear the canvas and redraw all shapes
-        drawShapes();
-        // update the starting drag position (== the current mouse position)
-        startX = mouseX;
-        startY = mouseY;
+        if (canvas !== null) {
+            e.preventDefault();
+            e.stopPropagation();
+            // calculate the current mouse position
+            const mouseX = e.clientX - offset.left;
+            const mouseY = e.clientY - offset.top;
+            // how far has the mouse dragged from its previous mousemove position?
+            const dx = mouseX - startX;
+            const dy = mouseY - startY;
+            // calculate the distance in percentage of canvas width
+            const px = dx / canvas.width;
+            const py = dy / canvas.height;
+            // move the selected shape by the drag distance
+            const selectedShape = targets[selectedShapeIndex];
+            selectedShape.x += px;
+            selectedShape.y += py;
+            // clear the canvas and redraw all shapes
+            updateCanvas();
+            // update the starting drag position (== the current mouse position)
+            startX = mouseX;
+            startY = mouseY;
+        }
     };
     const handleMouseOut = (e: MouseEvent): void => {
         // return if we're not dragging
@@ -191,11 +202,6 @@ const CalibrationCanvas = forwardRef<
         }
     };
 
-    // Set image
-    // TODO: get this image later from parent
-    const img = new Image();
-    img.src = "http://astrobioloblog.files.wordpress.com/2011/10/duck-1.jpg";
-
     // Use effect hook to add all events and remove them when this components get unmounted
     useEffect(() => {
         // load canvas context after rendering
@@ -208,10 +214,9 @@ const CalibrationCanvas = forwardRef<
             // onload function (Should be called one time on load)
             img.onload = () => {
                 ctx?.drawImage(img, 0, 0);
-                drawShapes();
+                // initialize offset and draw image on current size
+                handleResize();
             };
-            // initialize offset
-            offset = canvas.getBoundingClientRect();
             // update canvas offset on resize
             window.addEventListener("resize", handleResize);
             // mouse events for dragging around targets/shapes
@@ -275,14 +280,69 @@ export { CalibrationCanvas };
  * @param shape given shape
  * @returns true if cord is inside shape
  */
-const isInsideShape = (mx: number, my: number, shape: Shape): boolean => {
-    const dx = mx - shape.x;
-    const dy = my - shape.y;
+const isInsideShape = (
+    mx: number,
+    my: number,
+    shape: Shape,
+    canvas: HTMLCanvasElement,
+): boolean => {
+    const dx = mx - shape.x * canvas.width;
+    const dy = my - shape.y * canvas.height;
     // math test to see if mouse is inside circle
-    if (dx * dx + dy * dy < shape.radius * shape.radius) {
+    const radius = shape.radius * canvas.width;
+    if (dx * dx + dy * dy < radius * radius) {
         // yes, mouse is inside this circle
         return true;
     } else {
         return false;
+    }
+};
+
+const drawImageScaled = (
+    img: HTMLImageElement,
+    ctx: CanvasRenderingContext2D,
+): void => {
+    // calculate image canvas ratio
+    const canvas = ctx.canvas;
+    const hRatio = canvas.width / img.width;
+    const vRatio = canvas.height / img.height;
+    const ratio = Math.min(hRatio, vRatio);
+    // calculate center
+    const centerShiftX = (canvas.width - img.width * ratio) / 2;
+    const centerShiftY = (canvas.height - img.height * ratio) / 2;
+    // clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // draw image
+    ctx.drawImage(
+        img,
+        0,
+        0,
+        img.width,
+        img.height,
+        centerShiftX,
+        centerShiftY,
+        img.width * ratio,
+        img.height * ratio,
+    );
+};
+
+const drawShapesScaled = (
+    shapes: Shape[],
+    ctx: CanvasRenderingContext2D,
+): void => {
+    // calculate image canvas ratio
+    const canvas = ctx.canvas;
+    for (let i = 0; i < shapes.length; i++) {
+        const shape = shapes[i];
+        ctx.beginPath();
+        ctx.arc(
+            shape.x * canvas.width,
+            shape.y * canvas.height,
+            shape.radius * canvas.width,
+            0,
+            Math.PI * 2,
+        );
+        ctx.fillStyle = "f000000";
+        ctx.fill();
     }
 };
