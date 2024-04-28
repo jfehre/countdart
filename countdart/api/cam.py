@@ -36,10 +36,14 @@ async def websocket_endpoint(cam_id: schemas.IdString, websocket: WebSocket):
     encoded_array = None
     try:
         while True:
-            # Add this statement to yield back control to allow
+            # Add this try block to yield back control to fastapi and allow
             # context switch and serve multiple request concurrently
-            # not working
-            await asyncio.sleep(0)
+            # receive_text is also needed to update state of connection:
+            # https://github.com/tiangolo/fastapi/discussions/9031#discussion-4911299
+            try:
+                await asyncio.wait_for(websocket.receive_text(), 0.0001)
+            except asyncio.TimeoutError:
+                pass
             # Get current values from key
             r = redis.Redis(host="redis", port=6379)
             encoded = r.get(f"img_{cam_id}")
