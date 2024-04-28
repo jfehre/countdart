@@ -126,6 +126,31 @@ def test_update_cam(test_client):
     assert data["id"] == id
 
 
+def test_update_cam2(test_client):
+    """Test update cam with calibration points"""
+    id = test_create_cam(test_client)
+    calibration_point1 = {"x": 1, "y": 1}
+    response = test_client.patch(
+        f"{api_url}/cams/{id}", json={"calibration_points": [calibration_point1]}
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data["calibration_points"]) == 1
+    assert data["calibration_points"][0] == calibration_point1
+
+
+def test_update_cam3(test_client):
+    """Test update cam with wrong calibration points.
+    Points should be between 0 and 1
+    """
+    id = test_create_cam(test_client)
+    calibration_point1 = {"x": 1.01, "y": -1}
+    response = test_client.patch(
+        f"{api_url}/cams/{id}", json={"calibration_points": [calibration_point1]}
+    )
+    assert response.status_code == 422
+
+
 def test_delete_cam(test_client):
     """Test delete cam"""
     id = test_create_cam(test_client)

@@ -9,6 +9,7 @@ import {
     type CamSchema,
     type DartboardCreateSchema,
     type DartboardSchema,
+    type CamPatchSchema,
 } from "../types/schemas";
 
 // Create a new Axios instance
@@ -104,6 +105,19 @@ export async function createCam(
     data: CamCreateSchema,
 ): Promise<AxiosResponse<CamSchema>> {
     return await api.post("/cams", data);
+}
+
+/**
+ * Patch Cam
+ */
+export async function patchCam(
+    id: string | undefined,
+    data: CamPatchSchema,
+): Promise<AxiosResponse<CamSchema>> {
+    if (id === undefined) {
+        throw Error("Cam id is undefined");
+    }
+    return await api.patch("/cams/" + id, data);
 }
 
 /**

@@ -3,6 +3,7 @@ import {
     createCam,
     deleteCam,
     getCams,
+    patchCam,
     patchDartboard,
 } from "@/app/services/api";
 import { notifications } from "@mantine/notifications";
@@ -16,6 +17,7 @@ import {
     type CamCreateSchema,
     type CamSchema,
     type DartboardSchema,
+    type CamPatchSchema,
 } from "@/app/types/schemas";
 
 /**
@@ -91,6 +93,33 @@ export function CameraOverview({
 
         createModalHandler.close();
     };
+    // Function to update cam via api
+    const patchCamFunc = (id: string, patchData: CamPatchSchema): void => {
+        patchCam(id, patchData)
+            .then((response) => {
+                const updatedCam = response.data;
+                const updatedCams = cams.map((cam, i) => {
+                    if (cam.id === updatedCam.id) {
+                        return updatedCam;
+                    } else {
+                        return cam;
+                    }
+                });
+                setCams(updatedCams);
+                notifications.show({
+                    title: "Sucessfull",
+                    message: "Updated Cam",
+                    color: "green",
+                });
+            })
+            .catch((error) => {
+                notifications.show({
+                    title: "Patch error",
+                    message: "Could not update Cam: " + error,
+                    color: "red",
+                });
+            });
+    };
 
     // Delete dartboard
     const deleteCamFunc = (key: string): void => {
@@ -152,6 +181,7 @@ export function CameraOverview({
                         key={cam.id}
                         cam={cam}
                         deleteFunc={deleteCamFunc}
+                        patchFunc={patchCamFunc}
                     />
                 ))}
             </SimpleGrid>

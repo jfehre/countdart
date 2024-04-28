@@ -19,7 +19,7 @@ import {
 import { WebSocketStream } from "./websocket-stream";
 import { startCam, stopCam } from "@/app/services/api";
 import { notifications } from "@mantine/notifications";
-import { type CamSchema } from "@/app/types/schemas";
+import { type CamPatchSchema, type CamSchema } from "@/app/types/schemas";
 import { CalibrationModal } from "./calibration-modal";
 import { useDisclosure } from "@mantine/hooks";
 
@@ -29,6 +29,7 @@ import { useDisclosure } from "@mantine/hooks";
 export interface CameraCardProps {
     cam: CamSchema;
     deleteFunc: (id: string) => void;
+    patchFunc: (id: string, patchData: CamPatchSchema) => void;
 }
 
 /**
@@ -36,8 +37,15 @@ export interface CameraCardProps {
  * @param param0 cam schema and delete function
  * @returns React Card Component
  */
-export function CameraCard({ cam, deleteFunc }: CameraCardProps): ReactElement {
+export function CameraCard({
+    cam,
+    deleteFunc,
+    patchFunc,
+}: CameraCardProps): ReactElement {
     const [isActive, setIsActive] = useState(cam.active);
+    const [isCalibrated, setIsCalibrated] = useState(
+        cam.calibration_points.length === 4,
+    );
 
     const [calibrateModalState, calibrateModalHandler] = useDisclosure(false);
 
@@ -131,8 +139,8 @@ export function CameraCard({ cam, deleteFunc }: CameraCardProps): ReactElement {
                     <Badge color={isActive ? "green" : "red"}>
                         {isActive ? "active" : "inactive"}
                     </Badge>
-                    <Badge color={isActive ? "green" : "red"}>
-                        {isActive ? "calibrated" : "uncalibrated"}
+                    <Badge color={isCalibrated ? "green" : "red"}>
+                        {isCalibrated ? "calibrated" : "uncalibrated"}
                     </Badge>
                 </Group>
             </Card.Section>
@@ -181,6 +189,8 @@ export function CameraCard({ cam, deleteFunc }: CameraCardProps): ReactElement {
                 opened={calibrateModalState}
                 onClose={calibrateModalHandler.close}
                 cam={cam}
+                patchFunc={patchFunc}
+                setIsCalibrated={setIsCalibrated}
             />
         </Card>
     );

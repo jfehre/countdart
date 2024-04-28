@@ -1,4 +1,4 @@
-import { type CamSchema } from "@/app/types/schemas";
+import { type CalibrationPoint, type CamSchema } from "@/app/types/schemas";
 import { Group } from "@mantine/core";
 import React, {
     useRef,
@@ -6,6 +6,7 @@ import React, {
     useEffect,
     forwardRef,
     useImperativeHandle,
+    useState,
 } from "react";
 
 export interface Shape {
@@ -20,6 +21,8 @@ export interface Shape {
  */
 export interface CalibrationCanvasHandle {
     handleScroll: () => void;
+    getCalibPoints: () => CalibrationPoint[];
+    clearCalibPoints: () => void;
 }
 
 /**
@@ -50,10 +53,12 @@ const CalibrationCanvas = forwardRef<
     // will be updated onScroll of parent and on resize of the window
     let offset = new DOMRect();
 
-    // Set image
-    // TODO: get this image later from parent
+    // Set image to websocket url
+    const url: string = `ws://localhost:7878/api/v1/cams/ws/${cam.id}/live`;
     const img = new Image();
-    img.src = "http://astrobioloblog.files.wordpress.com/2011/10/duck-1.jpg";
+    // default image;
+    const [imgSrc, setImgSrc] = useState("/images/no_image.webp");
+    img.src = imgSrc;
 
     // define canvas variables, but do not initialize
     // initialize it in the useEffect hook
@@ -64,7 +69,28 @@ const CalibrationCanvas = forwardRef<
 
     // define 4 targets/shapes from camera
     const targets: Shape[] = [];
-    targets.push({ x: 0.1, y: 0.1, radius: 0.01, label: "20 | 1" });
+    const initTargets = (): void => {
+        // initialize targets with 4 default points
+        targets.length = 0;
+        targets.push({ x: 0.1, y: 0.1, radius: 0.01, label: "20 | 1" });
+        targets.push({ x: 0.2, y: 0.1, radius: 0.01, label: "6 | 10" });
+        targets.push({ x: 0.3, y: 0.1, radius: 0.01, label: "3 | 19" });
+        targets.push({ x: 0.4, y: 0.1, radius: 0.01, label: "11 | 14" });
+    };
+    if (cam.calibration_points.length !== 4) {
+        // database needs to have exactly 4 points
+        initTargets();
+    } else {
+        // populate targets from saved points
+        for (const calibPoint of cam.calibration_points) {
+            targets.push({
+                x: calibPoint.x,
+                y: calibPoint.y,
+                radius: 0.01,
+                label: calibPoint.label,
+            });
+        }
+    }
 
     // drag related vars
     let isDragging = false;
@@ -100,6 +126,16 @@ const CalibrationCanvas = forwardRef<
             handleResize();
             const fakeEvent = new MouseEvent("mousemove");
             zoomFunction(fakeEvent);
+        },
+        getCalibPoints() {
+            // convert shapes to calibration points
+            return targets.map((target, i) => {
+                return { x: target.x, y: target.y, label: target.label };
+            });
+        },
+        clearCalibPoints() {
+            targets[0].x = 0.5;
+            targets[0].y = 0.5;
         },
     }));
 
@@ -212,8 +248,17 @@ const CalibrationCanvas = forwardRef<
         zoomCtx = zoomRef.current?.getContext("2d");
         if (ctx !== null && ctx !== undefined && canvas !== null) {
             // onload function (Should be called one time on load)
+
+            const ws = new WebSocket(url);
+
+            ws.onmessage = (e) => {
+                const b64String: string = e.data;
+                img.src = "data: image:jpeg;base64, " + b64String;
+                // set img src state, so no reflash happening on rerender
+                setImgSrc("data: image:jpeg;base64, " + b64String);
+            };
+
             img.onload = () => {
-                ctx?.drawImage(img, 0, 0);
                 // initialize offset and draw image on current size
                 handleResize();
             };
@@ -250,11 +295,12 @@ const CalibrationCanvas = forwardRef<
                     "mousemove",
                     zoomFunction,
                 );
+                ws.close();
             };
         }
-    }, []);
+    }, [cam]);
     return (
-        <Group ref={wrapperRef} p="md">
+        <Group ref={wrapperRef} pl="md">
             <canvas
                 style={{
                     position: "absolute",

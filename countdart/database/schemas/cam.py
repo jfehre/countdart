@@ -1,7 +1,7 @@
 """
 Cam schema for the database.
 """
-from typing import Optional, Union
+from typing import List, Optional, Union
 
 from pydantic import ConfigDict, Field
 
@@ -14,6 +14,17 @@ __all__ = (
     "CamPatch",
     "CamHardware",
 )
+
+
+class CalibrationPoint(BaseModel):
+    """Defines calibration point. Should be a value between 0 and 1.
+    Each calibration point describes a 2D point in percentage of the camera input image.
+    This is used to calibrate camera images with an homography operator.
+    """
+
+    x: float = Field(None, ge=0, le=1)
+    y: float = Field(None, ge=0, le=1)
+    label: str = Field(None)
 
 
 class CamBase(BaseModel):
@@ -32,6 +43,7 @@ class Cam(CamBase):
     id: PyObjectId = Field(alias="_id")
     model_config = ConfigDict(populate_by_name=True)
     active_task: Union[str, None] = None
+    calibration_points: List[CalibrationPoint] = []
 
 
 class CamCreate(CamBase):
@@ -48,6 +60,7 @@ class CamPatch(BaseModel):
     card_name: Optional[str] = None
     active: Optional[bool] = None
     active_task: Optional[Union[str, None]] = None
+    calibration_points: Optional[List[CalibrationPoint]] = None
 
 
 class CamHardware(BaseModel):
