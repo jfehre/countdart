@@ -32,8 +32,20 @@ router = APIRouter(prefix="/cams", tags=["Camera"])
 
 @router.websocket("/ws/{cam_id}/live")
 async def websocket_endpoint(cam_id: schemas.IdString, websocket: WebSocket):
+    """Will return websocket, which sends a live stream of given
+    camera (cam_id) as a b64 decoded string.
+    At default it sends the raw string. To change the kind of live view
+    send a textmessage with "raw", "warped" or "motion".
+    If an image is available it will be send, otherwise it will send
+    the string "undefined"
+
+    Args:
+        cam_id (schemas.IdString): _description_
+        websocket (WebSocket): _description_
+    """
     await websocket.accept()
     encoded_array = None
+    view = "raw"
     try:
         while True:
             # Add this try block to yield back control to fastapi and allow
@@ -41,19 +53,23 @@ async def websocket_endpoint(cam_id: schemas.IdString, websocket: WebSocket):
             # receive_text is also needed to update state of connection:
             # https://github.com/tiangolo/fastapi/discussions/9031#discussion-4911299
             try:
-                await asyncio.wait_for(websocket.receive_text(), 0.0001)
+                view = await asyncio.wait_for(websocket.receive_text(), 0.0001)
             except asyncio.TimeoutError:
                 pass
             # Get current values from key
             r = redis.Redis(host="redis", port=6379)
-            encoded = r.get(f"img_{cam_id}")
+            encoded = r.get(f"img_{view}_{cam_id}")
             # check if value changed, otherwise no update needs to be send
             if encoded_array == encoded:
                 continue
             else:
                 encoded_array = encoded
             # decode numpy array to base64 string
-            frame = decode_numpy(encoded_array)
+            try:
+                frame = decode_numpy(encoded_array)
+            except TypeError:
+                await websocket.send_text("undefined")
+                continue
             img = Image.fromarray(frame)
             with io.BytesIO() as buf:
                 img.save(buf, format="JPEG")

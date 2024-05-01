@@ -59,7 +59,7 @@ def process_camera(self, cam_db: schemas.Cam):
         # send frame
         logging.debug(frame.shape)
         encoded = encode_numpy(frame)
-        r.set(f"img_{cam_db.id}", encoded)
+        r.set(f"img_raw_{cam_db.id}", encoded)
         # warp image and send
         if warper:
             img = warper(frame)
