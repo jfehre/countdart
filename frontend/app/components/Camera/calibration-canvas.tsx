@@ -121,23 +121,27 @@ const CalibrationCanvas = forwardRef<
     };
     // scroll event to set offset
     // declared as imperative because the event happens on the parent component
-    useImperativeHandle(ref, () => ({
-        handleScroll() {
-            handleResize();
-            const fakeEvent = new MouseEvent("mousemove");
-            zoomFunction(fakeEvent);
-        },
-        getCalibPoints() {
-            // convert shapes to calibration points
-            return targets.map((target, i) => {
-                return { x: target.x, y: target.y, label: target.label };
-            });
-        },
-        clearCalibPoints() {
-            targets[0].x = 0.5;
-            targets[0].y = 0.5;
-        },
-    }));
+    useImperativeHandle(
+        ref,
+        () => ({
+            handleScroll() {
+                handleResize();
+                const fakeEvent = new MouseEvent("mousemove");
+                zoomFunction(fakeEvent);
+            },
+            getCalibPoints() {
+                // convert shapes to calibration points
+                return targets.map((target, i) => {
+                    return { x: target.x, y: target.y, label: target.label };
+                });
+            },
+            clearCalibPoints() {
+                targets[0].x = 0.5;
+                targets[0].y = 0.5;
+            },
+        }),
+        [cam],
+    );
 
     // dragging events to move targets/shapes
     const handleMouseDown = (e: MouseEvent): void => {
