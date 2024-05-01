@@ -2,7 +2,7 @@
 # This is an hacky workaround for pre-commit
 test/
 notebooks/
-countdart/operators/
+countdart/operators/motion_detector.py
 db.sqlite
 
 # private files which i dont want to upload

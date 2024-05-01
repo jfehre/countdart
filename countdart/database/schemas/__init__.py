@@ -22,7 +22,14 @@ the tutorial are:
 
 """
 from .base import BaseModel, IdString, PyObjectId  # noqa: F401
-from .cam import Cam, CamBase, CamCreate, CamHardware, CamPatch  # noqa: F401
+from .cam import (  # noqa: F401
+    CalibrationPoint,
+    Cam,
+    CamBase,
+    CamCreate,
+    CamHardware,
+    CamPatch,
+)
 from .dartboard import (  # noqa: F401
     Dartboard,
     DartboardBase,

@@ -8,6 +8,7 @@ from pydantic import ConfigDict, Field
 from .base import BaseModel, PyObjectId
 
 __all__ = (
+    "CalibrationPoint",
     "Cam",
     "CamBase",
     "CamCreate",

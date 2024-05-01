@@ -206,7 +206,7 @@ def start_cam(
                 cam_id, schemas.CamPatch(active=False, active_task=None)
             )
     # Start camera
-    r = process_camera.delay(cam.hardware_id, cam_id)
+    r = process_camera.delay(cam.model_dump())
     updated_cam = crud.update_cam(
         cam_id, schemas.CamPatch(active=True, active_task=r.id)
     )
