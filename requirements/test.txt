@@ -100,8 +100,8 @@ numpy==1.24.4
     # via
     #   -c requirements/base.txt
     #   countdart (pyproject.toml)
-    #   opencv-python
-opencv-python==4.9.0.80
+    #   opencv-contrib-python
+opencv-contrib-python==4.9.0.80
     # via
     #   -c requirements/base.txt
     #   countdart (pyproject.toml)
@@ -203,3 +203,7 @@ wcwidth==0.2.13
     # via
     #   -c requirements/base.txt
     #   prompt-toolkit
+websockets==12.0
+    # via
+    #   -c requirements/base.txt
+    #   countdart (pyproject.toml)

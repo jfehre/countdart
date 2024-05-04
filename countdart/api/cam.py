@@ -7,6 +7,7 @@ import base64
 import io
 from typing import List
 
+import numpy as np
 import redis
 from celery.contrib.abortable import AbortableAsyncResult
 from fastapi import (
@@ -70,6 +71,8 @@ async def websocket_endpoint(cam_id: schemas.IdString, websocket: WebSocket):
             except TypeError:
                 await websocket.send_text("undefined")
                 continue
+            # squeeze array for 2d images
+            frame = np.squeeze(frame)
             img = Image.fromarray(frame)
             with io.BytesIO() as buf:
                 img.save(buf, format="JPEG")

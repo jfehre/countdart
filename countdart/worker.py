@@ -9,6 +9,7 @@ from celery.utils.log import get_task_logger
 from countdart.celery_app import celery_app
 from countdart.database import schemas
 from countdart.io import USBCam
+from countdart.operators.change_detector import ChangeDetector
 from countdart.operators.homography_warper import HomographyWarper
 from countdart.utils.misc import encode_numpy
 
@@ -52,6 +53,7 @@ def process_camera(self, cam_db: schemas.Cam):
     warper = None
     if cam_db.calibration_points:
         warper = HomographyWarper(cam_db.calibration_points, cam.image_size)
+    change_detector = ChangeDetector()
 
     # endless loop. Needs to be canceled by celery
     while not self.is_aborted():
@@ -65,7 +67,11 @@ def process_camera(self, cam_db: schemas.Cam):
             img = warper(frame)
             encoded = encode_numpy(img)
             r.set(f"img_warped_{cam_db.id}", encoded)
-            logging.info(img.shape)
+        # change detector
+        if change_detector:
+            img = change_detector(frame)
+            encoded = encode_numpy(img)
+            r.set(f"img_motion_{cam_db.id}", encoded)
 
     # task was aborted so shutdown gracefully
     cam.stop()

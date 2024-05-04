@@ -15,7 +15,16 @@ def encode_numpy(array: np.ndarray) -> bytes:
     Returns:
         bytes: encoded array
     """
-    h, w, c = array.shape
+
+    if len(array.shape) == 2:
+        h, w = array.shape
+        c = 1
+    elif len(array.shape) == 3:
+        h, w, c = array.shape
+    else:
+        raise ValueError(
+            f"Shape {array.shape} is not supported. Please use (h, w, c) or (h, w)"
+        )
     shape = struct.pack(">III", h, w, c)
     encoded = shape + array.tobytes()
     return encoded

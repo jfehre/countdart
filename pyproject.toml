@@ -20,7 +20,7 @@ dependencies = [
     "docstring-parser",
     "uvicorn",
     "fastapi",
-    "opencv-python",
+    "opencv-contrib-python",
     "celery",
     "pillow",
     "redis",

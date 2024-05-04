@@ -7,7 +7,7 @@ from countdart.settings import settings
 
 __all__ = {"database"}
 
-client = MongoClient(host=str(settings.MONGO_DB_SERVER))
+client = MongoClient(host=str(settings.MONGO_DB_SERVER), directConnection=True)
 
 database = client[settings.MONGO_DB_DATABASE]
 

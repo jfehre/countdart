@@ -94,6 +94,10 @@ export function WebSocketStream({
                     variant={activeView === "motion" ? "filled" : "outline"}
                     size="md"
                     aria-label="Motion"
+                    onClick={() => {
+                        changeImageView("motion");
+                        setActiveView("motion");
+                    }}
                 >
                     <Tooltip label="Activity View" position="bottom">
                         <IconActivity />
