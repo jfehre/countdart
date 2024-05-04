@@ -1,3 +1,4 @@
+""" Miscellaneous helper functions"""
 import struct
 
 import numpy as np

@@ -1,5 +1,6 @@
-"""Homography warper. Will warp a given image onto a dartboard model.
-Needs to be initialized with calibration points to calculate
+""" This file contains the operator and all belonging functions,
+which help to warp the source image into the dartboard world
+coordinates.
 """
 from typing import List
 
@@ -14,6 +15,10 @@ __all__ = "HomographyWarper"
 
 
 class HomographyWarper(BaseOperator):
+    """Homography warper. Will warp a given image onto a dartboard model.
+    Needs to be initialized with calibration points to calculate
+    """
+
     def __init__(
         self, calib_points: List[CalibrationPoint], img_shape: np.ndarray
     ) -> None:

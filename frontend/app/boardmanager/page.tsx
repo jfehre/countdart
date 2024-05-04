@@ -10,12 +10,12 @@ import { notifications } from "@mantine/notifications";
 import { Button, Group, Modal, Stack } from "@mantine/core";
 import { IconPlus } from "@tabler/icons-react";
 
-import { Dartboard } from "../components/Dartboard/dartboard";
+import { Dartboard } from "../components/dartboard/dartboard";
 import { useDisclosure } from "@mantine/hooks";
 import {
     CreateDartboardForm,
     type DartboardCreateFunction,
-} from "../components/Dartboard/create-form";
+} from "../components/dartboard/create-form";
 import {
     type DartboardCreateSchema,
     type DartboardSchema,

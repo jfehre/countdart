@@ -2,7 +2,7 @@
 import cv2
 import numpy as np
 
-from countdart.operators import BaseOperator
+from countdart.operators.operator import BaseOperator
 
 __all__ = "ChangeDetector"
 

@@ -62,7 +62,8 @@ ignore-private = true
 ignore-init-method = true
 ignore-magic = true
 ignore-nested-functions = true
-exclude = ["tests"]
+fail-under = 100
+exclude = ["tests", "frontend"]
 
 [tool.coverage.run]
 omit = ['*/tests/*']

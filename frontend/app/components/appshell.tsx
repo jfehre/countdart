@@ -2,9 +2,10 @@
 
 import { AppShell, Burger } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
-import { SidebarNav } from "./Sidebar/sidebar";
+import { SidebarNav } from "./sidebar/sidebar";
 import React, { type ReactElement } from "react";
 import { Notifications } from "@mantine/notifications";
+import { Footer } from "./footer/footer";
 
 /**
  * This is the main app shell and renders the navbar, header and footer
@@ -47,7 +48,9 @@ export function MainAppShell({
                 <Notifications />
                 {children}
             </AppShell.Main>
-            <AppShell.Footer></AppShell.Footer>
+            <AppShell.Footer>
+                <Footer />
+            </AppShell.Footer>
         </AppShell>
     );
 }

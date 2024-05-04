@@ -12,12 +12,21 @@ import {
     type CamPatchSchema,
 } from "../types/schemas";
 
+export const host = "http://127.0.0.1:7878";
+export const apiV1 = "/api/v1";
+
 // Create a new Axios instance
 // TODO: get url from settings
 const api: AxiosInstance = axios.create({
-    baseURL: "http://127.0.0.1:7878/api/v1",
+    baseURL: host + apiV1,
 });
 
+/**
+ * Check Health of connection
+ */
+export async function health(): Promise<AxiosResponse> {
+    return await api.get("/health");
+}
 /**
  * Get all Dartboards
  */
