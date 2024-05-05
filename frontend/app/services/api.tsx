@@ -149,3 +149,10 @@ export async function startCam(id: string): Promise<AxiosResponse<CamSchema>> {
 export async function stopCam(id: string): Promise<AxiosResponse<CamSchema>> {
     return await api.get("/cams/" + id + "/stop");
 }
+
+/**
+ * Get Cam FPS
+ */
+export async function getCamFps(id: string): Promise<AxiosResponse<number>> {
+    return await api.get("/cams/" + id + "/fps");
+}

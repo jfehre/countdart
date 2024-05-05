@@ -1,4 +1,12 @@
-import { ActionIcon, ActionIconGroup, Stack, Tooltip } from "@mantine/core";
+import { getCamFps } from "@/app/services/api";
+import {
+    ActionIcon,
+    ActionIconGroup,
+    Stack,
+    Text,
+    Tooltip,
+} from "@mantine/core";
+import { notifications } from "@mantine/notifications";
 import {
     IconActivity,
     IconLivePhoto,
@@ -18,9 +26,25 @@ export function WebSocketStream({
 }: WebSocketStreamProps): ReactElement {
     // base64 image
     const [image, setImage] = useState("/images/no_image.webp");
+    const [fps, setFps] = useState<number>();
     const url: string = `ws://localhost:7878/api/v1/cams/ws/${camId}/live`;
     const [activeView, setActiveView] = useState("raw");
     const ws = useRef<WebSocket>();
+
+    // get cam fps
+    const getCamFpsFunc = (): void => {
+        getCamFps(camId)
+            .then((response) => {
+                setFps(response.data);
+            })
+            .catch((error) => {
+                notifications.show({
+                    title: "Error",
+                    message: "Could not get cam fps: " + error,
+                    color: "red",
+                });
+            });
+    };
 
     // change image view between raw, warped and motion
     const changeImageView = (view: string): void => {
@@ -40,6 +64,8 @@ export function WebSocketStream({
             } else {
                 setImage("data: image:jpeg;base64, " + b64String);
             }
+            // update fps
+            getCamFpsFunc();
         };
 
         return () => {
@@ -63,6 +89,9 @@ export function WebSocketStream({
                     style={{ objectFit: "contain" }}
                 ></Image>
             </div>
+            <Text pos={"absolute"} right={0} c="red">
+                FPS: {fps}
+            </Text>
             <ActionIconGroup pos={"absolute"} orientation="vertical">
                 <ActionIcon
                     variant={activeView === "raw" ? "filled" : "outline"}

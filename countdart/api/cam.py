@@ -59,7 +59,7 @@ async def websocket_endpoint(cam_id: schemas.IdString, websocket: WebSocket):
                 pass
             # Get current values from key
             r = redis.Redis(host="redis", port=6379)
-            encoded = r.get(f"img_{view}_{cam_id}")
+            encoded = r.get(f"cam_{cam_id}_img_{view}")
             # check if value changed, otherwise no update needs to be send
             if encoded_array == encoded:
                 continue
@@ -264,10 +264,10 @@ def get_image(
     """Returns the current frame of the camera
 
     Args:
-        cam_id (schemas.IdString): id of the dartboard
+        cam_id (schemas.IdString): id of the cam
     """
     r = redis.Redis(host="redis", port=6379)
-    encoded = r.get(f"img_{cam_id}")
+    encoded = r.get(f"cam_{cam_id}_img_raw")
     frame = decode_numpy(encoded)
     img = Image.fromarray(frame)
     with io.BytesIO() as buf:
@@ -275,3 +275,19 @@ def get_image(
         im_bytes = buf.getvalue()
 
     return Response(im_bytes, media_type="image/png")
+
+
+@router.get("/{cam_id}/fps")
+def get_cam_fps(
+    cam_id: schemas.IdString,
+) -> float:
+    """Returns current fps of the cam
+
+    Args:
+        cam_id (schemas.IdString): id of the cam
+
+    Returns:
+        float: fps
+    """
+    r = redis.Redis(host="redis", port=6379)
+    return r.get(f"cam_{cam_id}_fps")

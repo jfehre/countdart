@@ -10,6 +10,7 @@ from countdart.celery_app import celery_app
 from countdart.database import schemas
 from countdart.io import USBCam
 from countdart.operators.change_detector import ChangeDetector
+from countdart.operators.fps_calculator import FpsCalculator
 from countdart.operators.homography_warper import HomographyWarper
 from countdart.utils.misc import encode_numpy
 
@@ -43,17 +44,20 @@ def process_camera(self, cam_db: schemas.Cam):
     """
     import redis
 
+    # initialize vars
     cam_db = schemas.Cam(**cam_db)
-
     r = redis.Redis(host="redis", port=6379)
+
     # start camera
     cam = USBCam(cam_db.hardware_id)
     cam.start()
+
     # create operators
     warper = None
     if cam_db.calibration_points:
         warper = HomographyWarper(cam_db.calibration_points, cam.image_size)
     change_detector = ChangeDetector()
+    fps_calculator = FpsCalculator()
 
     # endless loop. Needs to be canceled by celery
     while not self.is_aborted():
@@ -61,17 +65,21 @@ def process_camera(self, cam_db: schemas.Cam):
         # send frame
         logging.debug(frame.shape)
         encoded = encode_numpy(frame)
-        r.set(f"img_raw_{cam_db.id}", encoded)
+        r.set(f"cam_{cam_db.id}_img_raw", encoded)
         # warp image and send
         if warper:
             img = warper(frame)
             encoded = encode_numpy(img)
-            r.set(f"img_warped_{cam_db.id}", encoded)
+            r.set(f"cam_{cam_db.id}_img_warped", encoded)
         # change detector
         if change_detector:
             img = change_detector(frame)
             encoded = encode_numpy(img)
-            r.set(f"img_motion_{cam_db.id}", encoded)
+            r.set(f"cam_{cam_db.id}_img_motion", encoded)
+        # calculating fps
+        if fps_calculator:
+            fps = fps_calculator()
+            r.set(f"cam_{cam_db.id}_fps", str(int(fps)))
 
     # task was aborted so shutdown gracefully
     cam.stop()
