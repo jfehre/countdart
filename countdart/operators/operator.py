@@ -44,3 +44,9 @@ class BaseOperator(ABC):
         result = self.call(*args, **kwargs)
         self.send_to_redis(result)
         return result
+
+    def teardown(self):
+        """Function to clean up code,
+        e.g closing of file handlers and connections"""
+        if self.r is not None:
+            self.r.close()

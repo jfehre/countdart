@@ -36,3 +36,10 @@ class FrameGrabber(BaseOperator, ABC):
     def call(self) -> np.ndarray:
         """Proxies the get_frame method"""
         return self.get_frame()
+
+    def teardown(self):
+        """calls framegrabber stop function and super()
+        to clean up code and connections
+        """
+        self.stop()
+        super().teardown()

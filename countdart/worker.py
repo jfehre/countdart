@@ -66,4 +66,4 @@ def process_camera(self, cam_db: schemas.Cam):
         fps_calculator()
 
     # task was aborted so shutdown gracefully
-    cam.stop()
+    cam.teardown()
