@@ -20,8 +20,9 @@ class HomographyWarper(BaseOperator):
     """
 
     def __init__(
-        self, calib_points: List[CalibrationPoint], img_shape: np.ndarray
+        self, calib_points: List[CalibrationPoint], img_shape: np.ndarray, **kwargs
     ) -> None:
+        super().__init__(**kwargs)
         self.dartboard_model = DartboardModel()
         self.update_warp(calib_points, img_shape)
 

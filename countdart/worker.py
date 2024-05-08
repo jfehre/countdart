@@ -53,11 +53,17 @@ def process_camera(self, cam_db: schemas.Cam):
     cam.start()
 
     # create operators
-    warper = None
+    img_operators = []
     if cam_db.calibration_points:
-        warper = HomographyWarper(cam_db.calibration_points, cam.image_size)
-    change_detector = ChangeDetector()
-    fps_calculator = FpsCalculator()
+        img_operators.append(
+            HomographyWarper(
+                cam_db.calibration_points,
+                cam.image_size,
+                redis_key=f"cam_{cam_db.id}_img_warped",
+            )
+        )
+    img_operators.append(ChangeDetector(redis_key=f"cam_{cam_db.id}_img_motion"))
+    fps_calculator = FpsCalculator(redis_key=f"cam_{cam_db.id}_fps")
 
     # endless loop. Needs to be canceled by celery
     while not self.is_aborted():
@@ -66,20 +72,10 @@ def process_camera(self, cam_db: schemas.Cam):
         logging.debug(frame.shape)
         encoded = encode_numpy(frame)
         r.set(f"cam_{cam_db.id}_img_raw", encoded)
-        # warp image and send
-        if warper:
-            img = warper(frame)
-            encoded = encode_numpy(img)
-            r.set(f"cam_{cam_db.id}_img_warped", encoded)
-        # change detector
-        if change_detector:
-            img = change_detector(frame)
-            encoded = encode_numpy(img)
-            r.set(f"cam_{cam_db.id}_img_motion", encoded)
-        # calculating fps
-        if fps_calculator:
-            fps = fps_calculator()
-            r.set(f"cam_{cam_db.id}_fps", str(int(fps)))
+        # add image operators
+        for operator in img_operators:
+            operator(frame)
+        fps_calculator()
 
     # task was aborted so shutdown gracefully
     cam.stop()

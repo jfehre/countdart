@@ -9,8 +9,8 @@ __all__ = "FpsCalculator"
 class FpsCalculator(BaseOperator):
     """This class will call current fps, based on the frequency it is called"""
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.prev_frame_time = 0
         self.fps = None
         # factor for new frame if higher the average will change faster

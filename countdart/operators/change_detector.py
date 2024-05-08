@@ -11,8 +11,8 @@ class ChangeDetector(BaseOperator):
     """Change detecter based on opencv Background Foreground Subtractor.
     Will be used to detect hand motion and darts on an empty board"""
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.fgbg = cv2.bgsegm.createBackgroundSubtractorMOG()
 
     def call(self, image: np.array, **kwargs):
