@@ -1,54 +1,28 @@
 """Uniform wrapper for USB cameras. It is based on the v4l2py package"""
 
 import io
-from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List
 
 import numpy as np
 from PIL import Image
 from v4l2py import Device, iter_video_capture_devices
 from v4l2py.device import BufferType
 
-__all__ = ["BaseCam", "USBCam"]
+from countdart.operators.io.frame_grabber import FrameGrabber
+
+__all__ = ["USBCam"]
 
 
-class BaseCam(ABC):
-    """abstract base class which describes
-    the interface with camera classes
-    """
-
-    @property
-    @abstractmethod
-    def image_size(self) -> Tuple[int, int, int]:
-        """The image size as tuple of (height, width, channels)"""
-
-    @abstractmethod
-    def start():
-        """Starting the camera stream"""
-
-    @abstractmethod
-    def stop():
-        """Stopping the camera stream"""
-
-    @abstractmethod
-    def get_frame() -> np.ndarray:
-        """Return frame"""
-
-
-class USBCam(BaseCam):
-    """Implementation of an usb cam with v4l2py
-
-    Args:
-        BaseCam ():
-    """
+class USBCam(FrameGrabber):
+    """Implementation of an usb cam with v4l2py"""
 
     def __init__(self, device_id: int, **kwargs) -> None:
-        self.cam = Device.from_id(device_id, **kwargs)
+        self.cam = Device.from_id(device_id)
         # Load self.cam.info
         self.cam.open()
         self.cam.close()
         self.frame_iterator = None
-        super().__init__()
+        super().__init__(**kwargs)
 
     @property
     def image_size(self):

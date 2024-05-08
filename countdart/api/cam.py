@@ -24,7 +24,7 @@ from countdart.celery_app import celery_app
 from countdart.database import schemas
 from countdart.database.crud import cam as crud
 from countdart.database.db import NameAlreadyTakenError, NotFoundError
-from countdart.io import USBCam
+from countdart.operators import USBCam
 from countdart.utils.misc import decode_numpy
 from countdart.worker import process_camera
 

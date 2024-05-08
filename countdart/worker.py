@@ -1,6 +1,5 @@
 """This worker module contains all celery task."""
 
-import logging
 import time
 
 from celery.contrib.abortable import AbortableTask
@@ -8,11 +7,7 @@ from celery.utils.log import get_task_logger
 
 from countdart.celery_app import celery_app
 from countdart.database import schemas
-from countdart.io import USBCam
-from countdart.operators.change_detector import ChangeDetector
-from countdart.operators.fps_calculator import FpsCalculator
-from countdart.operators.homography_warper import HomographyWarper
-from countdart.utils.misc import encode_numpy
+from countdart.operators import ChangeDetector, FpsCalculator, HomographyWarper, USBCam
 
 logger = get_task_logger(__name__)
 
@@ -42,14 +37,11 @@ def process_camera(self, cam_db: schemas.Cam):
     Args:4
         cam: usb cam index
     """
-    import redis
-
     # initialize vars
     cam_db = schemas.Cam(**cam_db)
-    r = redis.Redis(host="redis", port=6379)
 
     # start camera
-    cam = USBCam(cam_db.hardware_id)
+    cam = USBCam(cam_db.hardware_id, redis_key=f"cam_{cam_db.id}_img_raw")
     cam.start()
 
     # create operators
@@ -67,11 +59,7 @@ def process_camera(self, cam_db: schemas.Cam):
 
     # endless loop. Needs to be canceled by celery
     while not self.is_aborted():
-        frame = cam.get_frame()
-        # send frame
-        logging.debug(frame.shape)
-        encoded = encode_numpy(frame)
-        r.set(f"cam_{cam_db.id}_img_raw", encoded)
+        frame = cam()
         # add image operators
         for operator in img_operators:
             operator(frame)
