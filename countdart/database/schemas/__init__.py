@@ -26,6 +26,7 @@ from .cam import (  # noqa: F401
     CalibrationPoint,
     Cam,
     CamBase,
+    CamConfig,
     CamCreate,
     CamHardware,
     CamPatch,

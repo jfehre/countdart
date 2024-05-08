@@ -5,7 +5,8 @@ Used to retrieve, create, update and delete dartboards
 import asyncio
 import base64
 import io
-from typing import List
+import json
+from typing import Any, Dict, List
 
 import numpy as np
 import redis
@@ -35,8 +36,9 @@ router = APIRouter(prefix="/cams", tags=["Camera"])
 async def websocket_endpoint(cam_id: schemas.IdString, websocket: WebSocket):
     """Will return websocket, which sends a live stream of given
     camera (cam_id) as a b64 decoded string.
-    At default it sends the raw string. To change the kind of live view
-    send a textmessage with "raw", "warped" or "motion".
+    At default it sends the output of USBCam. To change the output of the live view
+    to another operator send a textmessage with the name of the operator.
+    Currently "USBCam", "HomographyWarper" and "ChangeDetector" are supported.
     If an image is available it will be send, otherwise it will send
     the string "undefined"
 
@@ -46,7 +48,7 @@ async def websocket_endpoint(cam_id: schemas.IdString, websocket: WebSocket):
     """
     await websocket.accept()
     encoded_array = None
-    view = "raw"
+    operator = "USBCam"
     try:
         while True:
             # Add this try block to yield back control to fastapi and allow
@@ -54,12 +56,12 @@ async def websocket_endpoint(cam_id: schemas.IdString, websocket: WebSocket):
             # receive_text is also needed to update state of connection:
             # https://github.com/tiangolo/fastapi/discussions/9031#discussion-4911299
             try:
-                view = await asyncio.wait_for(websocket.receive_text(), 0.0001)
+                operator = await asyncio.wait_for(websocket.receive_text(), 0.0001)
             except asyncio.TimeoutError:
                 pass
             # Get current values from key
             r = redis.Redis(host="redis", port=6379)
-            encoded = r.get(f"cam_{cam_id}_img_{view}")
+            encoded = r.get(f"cam_{cam_id}_{operator}")
             # check if value changed, otherwise no update needs to be send
             if encoded_array == encoded:
                 continue
@@ -290,4 +292,50 @@ def get_cam_fps(
         float: fps
     """
     r = redis.Redis(host="redis", port=6379)
-    return r.get(f"cam_{cam_id}_fps")
+    return r.get(f"cam_{cam_id}_FpsCalculator")
+
+
+@router.patch("/{cam_id}/config")
+def set_config(cam_id: schemas.IdString, config: Dict[str, Any]) -> schemas.Cam:
+    """Patch camera config.
+
+    Args:
+        cam_id (schemas.IdString): id of the cam
+
+    Returns:
+        str: returns always "Done"
+    """
+
+    def update_recursively(old_dict: Dict, new_dict: Dict) -> Dict:
+        """Update old dictionary with values and keys of
+        new dictionary
+
+        Args:
+            old_dict Dict: old dictionary
+            new_dict Dict: new dictionary
+
+        Returns:
+            Dict: updated dictionary
+        """
+        for key, value in new_dict.items():
+            if isinstance(value, dict):
+                old_dict[key] = update_recursively(old_dict.get(key, {}), value)
+            elif value == "_deleted_":
+                old_dict.pop(key, None)
+            else:
+                old_dict[key] = value
+        return old_dict
+
+    # update db entry with cam config
+    try:
+        old_config = crud.get_cam(cam_id).cam_config
+        update_recursively(old_config, config)
+        patch = schemas.CamPatch(cam_config=old_config)
+        updated = crud.update_cam(cam_id, patch)
+        # use redis to apply config to worker processes
+        r = redis.Redis(host="redis", port=6379)
+        r.set(f"cam_{cam_id}_config", json.dumps(patch.cam_config))
+    except NotFoundError as e:
+        raise HTTPException(404) from e
+
+    return updated

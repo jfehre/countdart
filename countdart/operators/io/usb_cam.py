@@ -1,6 +1,7 @@
 """Uniform wrapper for USB cameras. It is based on the v4l2py package"""
 
 import io
+import logging
 from typing import Any, Dict, List
 
 import numpy as np
@@ -47,6 +48,21 @@ class USBCam(FrameGrabber):
         # TODO: convert to numpy array
         img = Image.open(io.BytesIO(frame.data))
         return np.asarray(img)
+
+    def set_config(self, key: str, value: Any) -> None:
+        """set camera config by key and value"""
+        if key == "reset" and value:
+            self.reset_config()
+        try:
+            ctrl = self.cam.controls[key]
+            ctrl.value = value
+        except KeyError:
+            logging.warning(f"Control {key} does not exist")
+
+    def reset_config(self):
+        """reset all camera configs"""
+        self.cam.controls.set_to_default()
+        self.config_raw = None
 
     @classmethod
     def get_available_cams(cls) -> List[Dict[str, Any]]:

@@ -28,7 +28,7 @@ export function WebSocketStream({
     const [image, setImage] = useState("/images/no_image.webp");
     const [fps, setFps] = useState<number>();
     const url: string = `ws://localhost:7878/api/v1/cams/ws/${camId}/live`;
-    const [activeView, setActiveView] = useState("raw");
+    const [activeView, setActiveView] = useState("USBCam");
     const ws = useRef<WebSocket>();
 
     // get cam fps
@@ -46,7 +46,7 @@ export function WebSocketStream({
             });
     };
 
-    // change image view between raw, warped and motion
+    // change image view between different operators
     const changeImageView = (view: string): void => {
         ws.current?.send(view);
         setActiveView(view);
@@ -94,12 +94,12 @@ export function WebSocketStream({
             </Text>
             <ActionIconGroup pos={"absolute"} orientation="vertical">
                 <ActionIcon
-                    variant={activeView === "raw" ? "filled" : "outline"}
+                    variant={activeView === "USBCam" ? "filled" : "outline"}
                     size="md"
                     aria-label="Live"
                     onClick={() => {
-                        changeImageView("raw");
-                        setActiveView("raw");
+                        changeImageView("USBCam");
+                        setActiveView("USBCam");
                     }}
                 >
                     <Tooltip label="Live View" position="bottom">
@@ -107,12 +107,14 @@ export function WebSocketStream({
                     </Tooltip>
                 </ActionIcon>
                 <ActionIcon
-                    variant={activeView === "warped" ? "filled" : "outline"}
+                    variant={
+                        activeView === "HomographyWarper" ? "filled" : "outline"
+                    }
                     size="md"
                     aria-label="Warped"
                     onClick={() => {
-                        changeImageView("warped");
-                        setActiveView("warped");
+                        changeImageView("HomographyWarper");
+                        setActiveView("HomographyWarper");
                     }}
                 >
                     <Tooltip label="Warped View" position="bottom">
@@ -120,12 +122,14 @@ export function WebSocketStream({
                     </Tooltip>
                 </ActionIcon>
                 <ActionIcon
-                    variant={activeView === "motion" ? "filled" : "outline"}
+                    variant={
+                        activeView === "ChangeDetector" ? "filled" : "outline"
+                    }
                     size="md"
                     aria-label="Motion"
                     onClick={() => {
-                        changeImageView("motion");
-                        setActiveView("motion");
+                        changeImageView("ChangeDetector");
+                        setActiveView("ChangeDetector");
                     }}
                 >
                     <Tooltip label="Activity View" position="bottom">

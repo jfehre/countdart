@@ -1,7 +1,7 @@
 """
 Cam schema for the database.
 """
-from typing import List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from pydantic import ConfigDict, Field
 
@@ -14,7 +14,10 @@ __all__ = (
     "CamCreate",
     "CamPatch",
     "CamHardware",
+    "CamConfig",
 )
+
+CamConfig = Dict[str, Any]
 
 
 class CalibrationPoint(BaseModel):
@@ -36,6 +39,7 @@ class CamBase(BaseModel):
     card_name: str
     active: bool = False
     hardware_id: int
+    cam_config: CamConfig = Field(default_factory=dict)
 
 
 class Cam(CamBase):
@@ -62,6 +66,7 @@ class CamPatch(BaseModel):
     active: Optional[bool] = None
     active_task: Optional[Union[str, None]] = None
     calibration_points: Optional[List[CalibrationPoint]] = None
+    cam_config: Optional[CamConfig] = None
 
 
 class CamHardware(BaseModel):

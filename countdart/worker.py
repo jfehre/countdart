@@ -41,7 +41,7 @@ def process_camera(self, cam_db: schemas.Cam):
     cam_db = schemas.Cam(**cam_db)
 
     # start camera
-    cam = USBCam(cam_db.hardware_id, redis_key=f"cam_{cam_db.id}_img_raw")
+    cam = USBCam(cam_db.hardware_id, redis_key=f"cam_{cam_db.id}")
     cam.start()
 
     # create operators
@@ -51,11 +51,11 @@ def process_camera(self, cam_db: schemas.Cam):
             HomographyWarper(
                 cam_db.calibration_points,
                 cam.image_size,
-                redis_key=f"cam_{cam_db.id}_img_warped",
+                redis_key=f"cam_{cam_db.id}",
             )
         )
-    img_operators.append(ChangeDetector(redis_key=f"cam_{cam_db.id}_img_motion"))
-    fps_calculator = FpsCalculator(redis_key=f"cam_{cam_db.id}_fps")
+    img_operators.append(ChangeDetector(redis_key=f"cam_{cam_db.id}"))
+    fps_calculator = FpsCalculator(redis_key=f"cam_{cam_db.id}")
 
     # endless loop. Needs to be canceled by celery
     while not self.is_aborted():
