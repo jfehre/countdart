@@ -6,7 +6,7 @@ import asyncio
 import base64
 import io
 import json
-from typing import Any, Dict, List
+from typing import List, Optional, Tuple
 
 import numpy as np
 import redis
@@ -25,6 +25,7 @@ from countdart.celery_app import celery_app
 from countdart.database import schemas
 from countdart.database.crud import cam as crud
 from countdart.database.db import NameAlreadyTakenError, NotFoundError
+from countdart.database.schemas.config import AllConfigModel, DeleteConfigModel
 from countdart.operators import USBCam
 from countdart.utils.misc import decode_numpy
 from countdart.worker import process_camera
@@ -279,6 +280,23 @@ def get_image(
     return Response(im_bytes, media_type="image/png")
 
 
+@router.get("/{cam_id}/config")
+def get_config(
+    cam_id: schemas.IdString,
+) -> List[AllConfigModel]:
+    """Returns config and possible settings about cam.
+
+    Args:
+        cam_id (schemas.IdString): id of the cam
+
+    Returns:
+        Dict[str, Any]: List with all possible config models
+    """
+    cam_db = crud.get_cam(cam_id)
+    cam = USBCam(cam_db.hardware_id, config=cam_db.cam_config)
+    return cam.get_config()
+
+
 @router.get("/{cam_id}/fps")
 def get_cam_fps(
     cam_id: schemas.IdString,
@@ -296,7 +314,7 @@ def get_cam_fps(
 
 
 @router.patch("/{cam_id}/config")
-def set_config(cam_id: schemas.IdString, config: Dict[str, Any]) -> schemas.Cam:
+def set_config(cam_id: schemas.IdString, config: List[AllConfigModel]) -> schemas.Cam:
     """Patch camera config.
 
     Args:
@@ -306,35 +324,129 @@ def set_config(cam_id: schemas.IdString, config: Dict[str, Any]) -> schemas.Cam:
         str: returns always "Done"
     """
 
-    def update_recursively(old_dict: Dict, new_dict: Dict) -> Dict:
-        """Update old dictionary with values and keys of
-        new dictionary
+    def find(lst: List[AllConfigModel], attr: str, value: str) -> int:
+        """Return index of config model where attribute matches value.
+        Returns -1 if no config model with given attribute exists in list.
 
         Args:
-            old_dict Dict: old dictionary
-            new_dict Dict: new dictionary
+            lst (List[AllConfigModel]): list of config models
+            attr (str): attribute of config which should match.
+            value (str): value of given attribute to match
 
         Returns:
-            Dict: updated dictionary
+            int: index of config model in list. Returns -1 if it was not found
         """
-        for key, value in new_dict.items():
-            if isinstance(value, dict):
-                old_dict[key] = update_recursively(old_dict.get(key, {}), value)
-            elif value == "_deleted_":
-                old_dict.pop(key, None)
+        for i, dic in enumerate(lst):
+            if getattr(dic, attr) == value:
+                return i
+        return -1
+
+    def update(old: List[AllConfigModel], new: List[AllConfigModel]) -> List:
+        """Update old list of config models with list of new config models
+
+        Args:
+            old_list List: old list
+            new_list List: new list
+
+        Returns:
+            List: updated List
+        """
+        for item in new:
+            idx = find(old, "name", item.name)
+            if idx != -1:
+                old_item = old[idx]
+                data = item.model_dump(exclude_unset=True)
+                updated_item = old_item.model_copy(update=data)
+                old[idx] = updated_item
             else:
-                old_dict[key] = value
-        return old_dict
+                old.append(item)
+        return old
 
     # update db entry with cam config
     try:
         old_config = crud.get_cam(cam_id).cam_config
-        update_recursively(old_config, config)
-        patch = schemas.CamPatch(cam_config=old_config)
+        updated_config = update(old_config, config)
+        patch = schemas.CamPatch(cam_config=updated_config)
         updated = crud.update_cam(cam_id, patch)
         # use redis to apply config to worker processes
         r = redis.Redis(host="redis", port=6379)
-        r.set(f"cam_{cam_id}_config", json.dumps(patch.cam_config))
+        r.set(
+            f"cam_{cam_id}_config",
+            json.dumps({"USBCam": [c.model_dump() for c in patch.cam_config]}),
+        )
+    except NotFoundError as e:
+        raise HTTPException(404) from e
+
+    return updated
+
+
+@router.delete("/{cam_id}/config")
+def delete_config(cam_id: schemas.IdString, name: Optional[str] = None) -> schemas.Cam:
+    """Delete config
+
+    Args:
+        cam_id (schemas.IdString): cam id
+        name (Optional[str], optional): name of config which should be deleted.
+            If not given, deletes all configs. Defaults to None.
+
+    Raises:
+        HTTPException: 404 if cam id was not found
+
+    Returns:
+        schemas.Cam: updated cam
+    """
+
+    def remove(
+        lst: List[AllConfigModel], attr: str, value: str
+    ) -> Tuple[List[AllConfigModel], AllConfigModel]:
+        """Removes config model from list, where attribute matches value.
+        Returns updated list and removed config model.
+
+        Args:
+            lst (List[AllConfigModel]): List of config models
+            attr (str): attribute, wich should match value
+            value (str): value of the given attribute to match
+
+        Returns:
+            Tuple[List[AllConfigModel], AllConfigModel]: Updated List and removed item
+        """
+        updated = lst.copy()
+        deleted = None
+        for i, model in enumerate(lst):
+            if getattr(model, attr) == value:
+                deleted = updated.pop(i)
+        return updated, deleted
+
+    # save deleted configs to update live camera
+    deletions = []
+    try:
+        db_cam = crud.get_cam(cam_id)
+        old_config = db_cam.cam_config
+        # if name given only delete the specified config
+        if name:
+            updated_config, deleted_config = remove(old_config, "name", name)
+            if not deleted_config:
+                # Nothing to delete
+                return db_cam
+            # create delete config model
+            deleted_config.type = "_delete_"
+            deletions.append(DeleteConfigModel(**deleted_config.model_dump()))
+        else:
+            # delete all configs
+            updated_config = []
+            # create delete config model for each existing one
+            for deleted_conf in old_config:
+                deleted_conf.type = "_delete_"
+                deletions.append(DeleteConfigModel(**deleted_conf.model_dump()))
+        # update database
+        patch = schemas.CamPatch(cam_config=updated_config)
+        updated = crud.update_cam(cam_id, patch)
+        # use redis to apply config to worker processes
+        r = redis.Redis(host="redis", port=6379)
+        r.set(
+            f"cam_{cam_id}_config",
+            json.dumps({"USBCam": [c.model_dump() for c in deletions]}),
+        )
     except NotFoundError as e:
         raise HTTPException(404) from e
 

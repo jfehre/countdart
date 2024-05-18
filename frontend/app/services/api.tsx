@@ -10,6 +10,7 @@ import {
     type DartboardCreateSchema,
     type DartboardSchema,
     type CamPatchSchema,
+    type AllConfigSchema,
 } from "../types/schemas";
 
 export const host = "http://127.0.0.1:7878";
@@ -155,4 +156,23 @@ export async function stopCam(id: string): Promise<AxiosResponse<CamSchema>> {
  */
 export async function getCamFps(id: string): Promise<AxiosResponse<number>> {
     return await api.get("/cams/" + id + "/fps");
+}
+
+/**
+ * Get Cam informations
+ */
+export async function getCamConfig(
+    id: string,
+): Promise<AxiosResponse<AllConfigSchema[]>> {
+    return await api.get("/cams/" + id + "/config");
+}
+
+/**
+ * Patch Cam config
+ */
+export async function patchCamConfig(
+    id: string,
+    data: AllConfigSchema[],
+): Promise<AxiosResponse<CamSchema>> {
+    return await api.patch("/cams/" + id + "/config", data);
 }

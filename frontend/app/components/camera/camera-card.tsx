@@ -17,11 +17,16 @@ import {
     IconTrash,
 } from "@tabler/icons-react";
 import { WebSocketStream } from "./websocket-stream";
-import { startCam, stopCam } from "@/app/services/api";
+import { patchCamConfig, startCam, stopCam } from "@/app/services/api";
 import { notifications } from "@mantine/notifications";
-import { type CamPatchSchema, type CamSchema } from "@/app/types/schemas";
+import {
+    type AllConfigSchema,
+    type CamPatchSchema,
+    type CamSchema,
+} from "@/app/types/schemas";
 import { CalibrationModal } from "./calibration-modal";
 import { useDisclosure } from "@mantine/hooks";
+import { SettingsModal } from "./settings-modal";
 
 /**
  * Properties for the CameraCard
@@ -48,6 +53,7 @@ export function CameraCard({
     );
 
     const [calibrateModalState, calibrateModalHandler] = useDisclosure(false);
+    const [settingsModalState, settingsModalHandler] = useDisclosure(false);
 
     // Function to start camera via api. On error notification is shown
     const startCamFunc = (): void => {
@@ -88,6 +94,19 @@ export function CameraCard({
         } else {
             startCamFunc();
         }
+    };
+
+    // Function to update cam config via api
+    const patchCamConfigFunc = (patchData: AllConfigSchema[]): void => {
+        patchCamConfig(cam.id, patchData)
+            .then((response) => {})
+            .catch((error) => {
+                notifications.show({
+                    title: "Patch error",
+                    message: "Could not update Cam Config: " + error,
+                    color: "red",
+                });
+            });
     };
 
     return (
@@ -173,9 +192,7 @@ export function CameraCard({
                             </Tooltip>
                         </ActionIcon>
                         <ActionIcon
-                            onClick={(e: React.MouseEvent) => {
-                                e.preventDefault();
-                            }}
+                            onClick={settingsModalHandler.open}
                             variant="subtle"
                         >
                             <Tooltip label="Settings" position="bottom">
@@ -191,6 +208,12 @@ export function CameraCard({
                 cam={cam}
                 patchFunc={patchFunc}
                 setIsCalibrated={setIsCalibrated}
+            />
+            <SettingsModal
+                opened={settingsModalState}
+                onClose={settingsModalHandler.close}
+                cam={cam}
+                patchFunc={patchCamConfigFunc}
             />
         </Card>
     );

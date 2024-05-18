@@ -26,10 +26,17 @@ from .cam import (  # noqa: F401
     CalibrationPoint,
     Cam,
     CamBase,
-    CamConfig,
     CamCreate,
     CamHardware,
     CamPatch,
+)
+from .config import (  # noqa: F401
+    AllConfigModel,
+    BooleanConfigModel,
+    ConfigBaseModel,
+    DeleteConfigModel,
+    IntConfigModel,
+    SelectConfigModel,
 )
 from .dartboard import (  # noqa: F401
     Dartboard,

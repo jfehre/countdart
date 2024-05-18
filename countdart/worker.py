@@ -41,7 +41,9 @@ def process_camera(self, cam_db: schemas.Cam):
     cam_db = schemas.Cam(**cam_db)
 
     # start camera
-    cam = USBCam(cam_db.hardware_id, redis_key=f"cam_{cam_db.id}")
+    cam = USBCam(
+        cam_db.hardware_id, config=cam_db.cam_config, redis_key=f"cam_{cam_db.id}"
+    )
     cam.start()
 
     # create operators

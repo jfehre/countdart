@@ -2,16 +2,16 @@
 import json
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Mapping
+from typing import Any, List
 
 import numpy as np
 import redis
+from pydantic import TypeAdapter
 
+from countdart.database.schemas.config import AllConfigModel
 from countdart.utils.misc import encode_numpy
 
 __all__ = "BaseOperator"
-
-OperatorConfig = Mapping[str, str]
 
 
 class BaseOperator(ABC):
@@ -23,7 +23,7 @@ class BaseOperator(ABC):
     the call function will be send to redis.
     """
 
-    def __init__(self, redis_key: str = None, config: Dict[str, Any] = None):
+    def __init__(self, redis_key: str = None, config: List[AllConfigModel] = None):
         if redis_key:
             self.r = redis.Redis(host="redis", port=6379)
             self.r_key = redis_key
@@ -33,6 +33,8 @@ class BaseOperator(ABC):
         self.config = None
         if config:
             self.config = config
+            # configure
+            self.configure(self.config)
 
     @abstractmethod
     def call(self, *args, **kwargs):
@@ -57,21 +59,32 @@ class BaseOperator(ABC):
 
         It will append "_config" to redis key to look for configs. The config
         representation is a json dict.
-        Afterwards it will look for the operator class name as key in the config,
-        because multiple operators can share the same redis config path.
+
+        It will look for the operator class name as key in the config, and validate
+        the given value as list of config models.
+        The reason for this behavior is that multiple operators can share the same
+        redis config path.
+        After applying the changes, the config will be deleted from redis to avoid
+        updating a second time.
         """
         if self.r:
             all_conf = self.r.get(f"{self.r_key}_config")
-            all_conf = json.loads(all_conf)
-            # check if config for this operator exists
-            try:
-                op_conf = all_conf[self.__class__.__name__]
-            except KeyError:
-                return
-            # update config
-            if self.config != op_conf:
-                self.config = op_conf
-                self.configure(op_conf)
+            if all_conf:
+                all_conf = json.loads(all_conf)
+                # check if config for this operator exists
+                try:
+                    op_conf = all_conf.pop(self.__class__.__name__)
+                except KeyError:
+                    return
+                # convert and update config
+                op_conf = [
+                    TypeAdapter(AllConfigModel).validate_python(c) for c in op_conf
+                ]
+                if self.config != op_conf:
+                    self.config = op_conf
+                    self.configure(op_conf)
+                # delete config, because it was processed
+                self.r.set(f"{self.r_key}_config", json.dumps(all_conf))
 
     def __call__(self, *args, **kwargs):
         self.receive_config_from_redis()
@@ -85,11 +98,13 @@ class BaseOperator(ABC):
         if self.r is not None:
             self.r.close()
 
-    def configure(self, config_model: OperatorConfig):
+    def configure(self, configs=List[AllConfigModel]):
         """configure operator"""
-        for key, value in config_model.items():
+        if configs is None:
+            return
+        for config in configs:
             if hasattr(self, "set_config"):
-                self.set_config(key, value)
+                self.set_config(config)
             else:
                 logging.warning(
                     f"Operator {self.__class__.__name__} does"
