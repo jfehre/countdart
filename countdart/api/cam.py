@@ -26,7 +26,7 @@ from countdart.database import schemas
 from countdart.database.crud import cam as crud
 from countdart.database.db import NameAlreadyTakenError, NotFoundError
 from countdart.database.schemas.config import AllConfigModel, DeleteConfigModel
-from countdart.operators import USBCam
+from countdart.operators import FrameGrabber, USBCam
 from countdart.utils.misc import decode_numpy
 from countdart.worker import process_camera
 
@@ -49,7 +49,12 @@ async def websocket_endpoint(cam_id: schemas.IdString, websocket: WebSocket):
     """
     await websocket.accept()
     encoded_array = None
-    operator = "USBCam"
+    # Get cam model
+    try:
+        cam_db = crud.get_cam(cam_id)
+    except NotFoundError as e:
+        raise HTTPException(404) from e
+    operator = cam_db.type
     try:
         while True:
             # Add this try block to yield back control to fastapi and allow
@@ -127,7 +132,7 @@ def create_cam(cam: schemas.CamCreate) -> schemas.Cam:
     """Create new cam
 
     Args:
-        cam_id (schemas.IdString): id of the dartboard
+        cam (schemas.CamCreate): Cam schema to create
 
     Returns:
         Created cam
@@ -147,7 +152,7 @@ def update_cam(
     """Retrieve cam with given id
 
     Args:
-        cam_id (schemas.IdString): id of the dartboard
+        cam_id (schemas.IdString): id of the cam
 
     Returns:
         cam with given id
@@ -166,7 +171,7 @@ def delete_cam(
     """Delete cam with given id
 
     Args:
-        cam_id (schemas.IdString): id of the dartboard
+        cam_id (schemas.IdString): id of the cam
 
     Returns:
         cam with given id
@@ -182,7 +187,7 @@ def get_cam(cam_id: schemas.IdString) -> schemas.Cam:
     """Retrieve cam with given id
 
     Args:
-        cam_id (schemas.IdString): id of the dartboard
+        cam_id (schemas.IdString): id of the cam
 
     Returns:
         Cam with given id
@@ -293,7 +298,7 @@ def get_config(
         Dict[str, Any]: List with all possible config models
     """
     cam_db = crud.get_cam(cam_id)
-    cam = USBCam(cam_db.hardware_id, config=cam_db.cam_config)
+    cam = FrameGrabber.build_from_model(cam_db, config=cam_db.cam_config)
     return cam.get_config()
 
 
@@ -372,7 +377,7 @@ def set_config(cam_id: schemas.IdString, config: List[AllConfigModel]) -> schema
         r = redis.Redis(host="redis", port=6379)
         r.set(
             f"cam_{cam_id}_config",
-            json.dumps({"USBCam": [c.model_dump() for c in patch.cam_config]}),
+            json.dumps({updated.type: [c.model_dump() for c in patch.cam_config]}),
         )
     except NotFoundError as e:
         raise HTTPException(404) from e
@@ -445,7 +450,7 @@ def delete_config(cam_id: schemas.IdString, name: Optional[str] = None) -> schem
         r = redis.Redis(host="redis", port=6379)
         r.set(
             f"cam_{cam_id}_config",
-            json.dumps({"USBCam": [c.model_dump() for c in deletions]}),
+            json.dumps({updated.type: [c.model_dump() for c in deletions]}),
         )
     except NotFoundError as e:
         raise HTTPException(404) from e

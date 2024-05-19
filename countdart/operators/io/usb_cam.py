@@ -38,12 +38,41 @@ class USBCam(FrameGrabber):
         format = self.cam.get_format(BufferType.VIDEO_CAPTURE)
         return format.width, format.height, 3
 
+    def start(self):
+        """Starting the camera stream"""
+        self.cam.__enter__()
+        self.frame_iterator = self.cam.__iter__()
+
+    def stop(self):
+        """Stopping the camera stream"""
+        self.frame_iterator = None
+        self.cam.__exit__()
+
+    def get_frame(self) -> np.ndarray:
+        """Return frame"""
+        frame = next(self.frame_iterator)
+
+        # convert to numpy array based on frame format
+        format = frame.format.pixel_format.human_str()
+        if format == "YUYV":
+            raw = np.frombuffer(frame.data, dtype=np.uint8).reshape(
+                (frame.height, frame.width, 2)
+            )
+            img = cv2.cvtColor(raw, cv2.COLOR_YUV2RGB_YUYV)
+        elif format == "MJPG":
+            raw = np.frombuffer(frame.data, dtype=np.uint8)
+            bgr = cv2.imdecode(raw, cv2.IMREAD_COLOR)
+            img = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
+        else:
+            img = Image.open(io.BytesIO(frame.data))
+        return np.asarray(img)
+
     def get_config(self):
         """Get possible configs about cam. Will read configs directly from cam
         and not from the database. We assume that the changes in the database,
         are applied on the initalization of this camera via config parameter.
         """
-        info_dict = []
+        configs = []
         with self.cam:
             for control in self.cam.controls.values():
                 value = control.value
@@ -73,7 +102,7 @@ class USBCam(FrameGrabber):
                     raise TypeError(
                         f"No model schemata implemented for type {control.type}."
                     )
-                info_dict.append(conf)
+                configs.append(conf)
 
             # Add frame formats to config as a selection based config, which contains
             # height, width, fps, format
@@ -91,7 +120,7 @@ class USBCam(FrameGrabber):
                 f" {format.pixel_format.human_str()}"
             )
             # append to config
-            info_dict.append(
+            configs.append(
                 SelectConfigModel(
                     name="formats",
                     data=data,
@@ -100,36 +129,7 @@ class USBCam(FrameGrabber):
                 )
             )
 
-        return info_dict
-
-    def start(self):
-        """Starting the camera stream"""
-        self.cam.__enter__()
-        self.frame_iterator = self.cam.__iter__()
-
-    def stop(self):
-        """Stopping the camera stream"""
-        self.frame_iterator = None
-        self.cam.__exit__()
-
-    def get_frame(self) -> np.ndarray:
-        """Return frame"""
-        frame = next(self.frame_iterator)
-
-        # convert to numpy array based on frame format
-        format = frame.format.pixel_format.human_str()
-        if format == "YUYV":
-            raw = np.frombuffer(frame.data, dtype=np.uint8).reshape(
-                (frame.height, frame.width, 2)
-            )
-            img = cv2.cvtColor(raw, cv2.COLOR_YUV2RGB_YUYV)
-        elif format == "MJPG":
-            raw = np.frombuffer(frame.data, dtype=np.uint8)
-            bgr = cv2.imdecode(raw, cv2.IMREAD_COLOR)
-            img = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
-        else:
-            img = Image.open(io.BytesIO(frame.data))
-        return np.asarray(img)
+        return configs
 
     def set_config(self, config: AllConfigModel) -> None:
         """apply individual config model to camera"""
@@ -190,8 +190,6 @@ class USBCam(FrameGrabber):
         for dev in iter_video_capture_devices():
             dev.open()
             dev.close()
-            available_cams.append(
-                {"hardware_id": dev.index, "card_name": dev.info.card}
-            )
+            available_cams.append({"source": dev.index, "name": dev.info.card})
 
         return available_cams

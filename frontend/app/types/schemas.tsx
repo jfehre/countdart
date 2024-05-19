@@ -24,21 +24,23 @@ export interface CalibrationPoint {
 }
 
 export interface CamSchema {
-    card_name: string;
+    name: string;
     active: boolean;
-    hardware_id: number;
+    source: number | string;
+    type: string;
     id: string;
     calibration_points: CalibrationPoint[];
     cam_config: any;
 }
 
 export interface CamCreateSchema {
-    card_name: string;
-    hardware_id: number;
+    name: string;
+    source: number | string;
+    type: string;
 }
 
 export interface CamPatchSchema {
-    card_name?: string;
+    name?: string;
     active?: boolean;
     active_task?: string;
     calibration_points?: CalibrationPoint[];
@@ -46,8 +48,8 @@ export interface CamPatchSchema {
 }
 
 export interface CamHardwareSchema {
-    card_name: string;
-    hardware_id: number;
+    name: string;
+    source: number;
 }
 
 export interface IntConfigSchema {

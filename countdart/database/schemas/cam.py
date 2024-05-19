@@ -35,9 +35,10 @@ class CamBase(BaseModel):
     Base schema for a configurable dartboard setup.
     """
 
-    card_name: str
+    name: str
     active: bool = False
-    hardware_id: int
+    source: Union[int, str]
+    type: str
     cam_config: List[AllConfigModel] = []
 
 
@@ -61,7 +62,7 @@ class CamPatch(BaseModel):
     Contains all fields which can be patched
     """
 
-    card_name: Optional[str] = None
+    name: Optional[str] = None
     active: Optional[bool] = None
     active_task: Optional[Union[str, None]] = None
     calibration_points: Optional[List[CalibrationPoint]] = None
@@ -74,5 +75,5 @@ class CamHardware(BaseModel):
     contains the current hardware id and the card name of the camera.
     """
 
-    hardware_id: int
-    card_name: str
+    source: Union[int, str]
+    name: str

@@ -113,7 +113,7 @@ export function CameraCard({
         <Card shadow="sm" padding="lg" radius="md" withBorder>
             <Card.Section>
                 {/* Header is showing the camera stream */}
-                <WebSocketStream height={200} camId={cam.id} />
+                <WebSocketStream height={200} cam={cam} />
             </Card.Section>
             <Card.Section>
                 {/* display cam name, menu and badges */}
@@ -126,8 +126,8 @@ export function CameraCard({
                     align="top"
                 >
                     <Group gap="xs">
-                        <Text>{cam.card_name}</Text>
-                        <Text>{cam.hardware_id} </Text>
+                        <Text>{cam.name}</Text>
+                        <Text>{cam.source} </Text>
                     </Group>
                     <Menu position="bottom-end">
                         <Menu.Target>

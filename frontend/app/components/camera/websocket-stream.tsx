@@ -1,4 +1,5 @@
 import { getCamFps } from "@/app/services/api";
+import { type CamSchema } from "@/app/types/schemas";
 import {
     ActionIcon,
     ActionIconGroup,
@@ -16,24 +17,24 @@ import Image from "next/image";
 import React, { useEffect, type ReactElement, useState, useRef } from "react";
 
 export interface WebSocketStreamProps {
-    camId: string;
+    cam: CamSchema;
     height: number;
 }
 
 export function WebSocketStream({
-    camId,
+    cam,
     height,
 }: WebSocketStreamProps): ReactElement {
     // base64 image
     const [image, setImage] = useState("/images/no_image.webp");
     const [fps, setFps] = useState<number>();
-    const url: string = `ws://localhost:7878/api/v1/cams/ws/${camId}/live`;
-    const [activeView, setActiveView] = useState("USBCam");
+    const url: string = `ws://localhost:7878/api/v1/cams/ws/${cam.id}/live`;
+    const [activeView, setActiveView] = useState(cam.type);
     const ws = useRef<WebSocket>();
 
     // get cam fps
     const getCamFpsFunc = (): void => {
-        getCamFps(camId)
+        getCamFps(cam.id)
             .then((response) => {
                 setFps(response.data);
             })
@@ -94,12 +95,12 @@ export function WebSocketStream({
             </Text>
             <ActionIconGroup pos={"absolute"} orientation="vertical">
                 <ActionIcon
-                    variant={activeView === "USBCam" ? "filled" : "outline"}
+                    variant={activeView === cam.type ? "filled" : "outline"}
                     size="md"
                     aria-label="Live"
                     onClick={() => {
-                        changeImageView("USBCam");
-                        setActiveView("USBCam");
+                        changeImageView(cam.type);
+                        setActiveView(cam.type);
                     }}
                 >
                     <Tooltip label="Live View" position="bottom">

@@ -59,7 +59,7 @@ export function SettingsModal({
             size={"80%"}
             lockScroll={false}
         >
-            <WebSocketStream height={300} camId={cam.id} />
+            <WebSocketStream height={300} cam={cam} />
             <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} m="lg">
                 {camInfo.map((config, index) => {
                     return (

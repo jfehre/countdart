@@ -5,6 +5,8 @@ from typing import Tuple
 
 import numpy as np
 
+import countdart.operators.io as io
+from countdart.database.schemas.cam import Cam
 from countdart.operators.operator import BaseOperator
 
 __all__ = ["FrameGrabber"]
@@ -43,3 +45,13 @@ class FrameGrabber(BaseOperator, ABC):
         """
         self.stop()
         super().teardown()
+
+    @classmethod
+    def build_from_model(cls, model: Cam, **kwargs):
+        """Build a framegraber from database model.
+        Will check for model.type and create a framegraber from
+        the countdart.operators.io module with the same name as
+        given type.
+        """
+        c = getattr(io, model.type)
+        return c(model.source, **kwargs)

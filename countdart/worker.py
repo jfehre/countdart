@@ -7,7 +7,12 @@ from celery.utils.log import get_task_logger
 
 from countdart.celery_app import celery_app
 from countdart.database import schemas
-from countdart.operators import ChangeDetector, FpsCalculator, HomographyWarper, USBCam
+from countdart.operators import (
+    ChangeDetector,
+    FpsCalculator,
+    FrameGrabber,
+    HomographyWarper,
+)
 
 logger = get_task_logger(__name__)
 
@@ -41,8 +46,8 @@ def process_camera(self, cam_db: schemas.Cam):
     cam_db = schemas.Cam(**cam_db)
 
     # start camera
-    cam = USBCam(
-        cam_db.hardware_id, config=cam_db.cam_config, redis_key=f"cam_{cam_db.id}"
+    cam = FrameGrabber.build_from_model(
+        cam_db, config=cam_db.cam_config, redis_key=f"cam_{cam_db.id}"
     )
     cam.start()
 

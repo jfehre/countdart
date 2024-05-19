@@ -109,7 +109,7 @@ def start_dartboard(
         if cam.active:
             active_tasks.append(cam.active_task)
         else:
-            r = process_camera.delay(cam.hardware_id, cam_id)
+            r = process_camera.delay(cam.source, cam_id)
             active_tasks.append(r.id)
             cam_crud.update_cam(cam_id, schemas.CamPatch(active=True, active_task=r.id))
     # update active tasks

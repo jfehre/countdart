@@ -34,8 +34,9 @@ export function CreateCamForm({
     // create mantine form
     const form = useForm({
         initialValues: {
-            card_name: "",
-            hardware_id: -1,
+            name: "",
+            source: -1,
+            type: "USBCam",
         },
     });
 
@@ -47,12 +48,10 @@ export function CreateCamForm({
                 let newHardwareCams = response.data;
                 // remove all hardware cams with same hardware id as in existing cams
                 const existingHardwareIds = existingCams.map(
-                    (cam) => cam.hardware_id,
+                    (cam) => cam.source,
                 );
                 newHardwareCams = newHardwareCams.filter((hardwareCam) => {
-                    return !existingHardwareIds.includes(
-                        hardwareCam.hardware_id,
-                    );
+                    return !existingHardwareIds.includes(hardwareCam.source);
                 });
                 console.log(newHardwareCams);
                 // check if cams are not undefined and more than 0
@@ -64,11 +63,11 @@ export function CreateCamForm({
                     setHardwareCams(newHardwareCams);
                     // set initial value
                     form.setValues({
-                        card_name:
-                            newHardwareCams[0].card_name +
+                        name:
+                            newHardwareCams[0].name +
                             " " +
-                            newHardwareCams[0].hardware_id,
-                        hardware_id: newHardwareCams[0].hardware_id,
+                            newHardwareCams[0].source,
+                        source: newHardwareCams[0].source,
                     });
                 }
             })
@@ -87,20 +86,19 @@ export function CreateCamForm({
         // find hardware cam from native select value
         const chosenCam = hardwareCams.find(
             (hardwareCam) =>
-                hardwareCam.card_name + " " + hardwareCam.hardware_id ===
-                values.card_name,
+                hardwareCam.name + " " + hardwareCam.source === values.name,
         );
         if (chosenCam === undefined) {
             notifications.show({
                 title: "Something went wrong",
-                message: `The chosen hardware camera ${values.card_name} is not in the initial list`,
+                message: `The chosen hardware camera ${values.name} is not in the initial list`,
                 color: "red",
             });
             return;
         }
         // update values with hardware cam
-        values.card_name = chosenCam.card_name;
-        values.hardware_id = chosenCam.hardware_id;
+        values.name = chosenCam.name;
+        values.source = chosenCam.source;
         submit(values);
     };
 
@@ -111,13 +109,9 @@ export function CreateCamForm({
                     label="Camera"
                     data={hardwareCams.map((hardwareCam) => {
                         // use card name + hardware id as value
-                        return (
-                            hardwareCam.card_name +
-                            " " +
-                            hardwareCam.hardware_id
-                        );
+                        return hardwareCam.name + " " + hardwareCam.source;
                     })}
-                    {...form.getInputProps("card_name")}
+                    {...form.getInputProps("name")}
                 />
 
                 <Group justify="flex-end" mt="md">

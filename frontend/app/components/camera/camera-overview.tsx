@@ -19,6 +19,7 @@ import {
     type DartboardSchema,
     type CamPatchSchema,
 } from "@/app/types/schemas";
+import { CreateSimForm } from "./create-sim-form";
 
 /**
  * Properties for CamOverview
@@ -160,6 +161,7 @@ export function CameraOverview({
     return (
         <Stack>
             <Group justify="end" m="md">
+                {/** Add Camera */}
                 <Button
                     leftSection={<IconPlus />}
                     onClick={createModalHandler.open}
@@ -173,6 +175,21 @@ export function CameraOverview({
                     centered
                 >
                     <CreateCamForm submit={createCamFunc} existingCams={cams} />
+                </Modal>
+                {/** Add Simulation (maybe delete later) */}
+                <Button
+                    leftSection={<IconPlus />}
+                    onClick={createModalHandler.open}
+                >
+                    Add Simulation
+                </Button>
+                <Modal
+                    opened={createModalState}
+                    onClose={createModalHandler.close}
+                    title="Add Simulation"
+                    centered
+                >
+                    <CreateSimForm submit={createCamFunc} />
                 </Modal>
             </Group>
             <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} m="md">
