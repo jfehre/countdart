@@ -1,5 +1,7 @@
 """ Miscellaneous helper functions"""
 import struct
+from dataclasses import dataclass
+from typing import Tuple
 
 import numpy as np
 
@@ -44,3 +46,48 @@ def decode_numpy(bytes: bytes) -> np.ndarray:
     # Add slicing here, or else the array would differ from the original
     array = np.frombuffer(bytes[12:], dtype=np.uint8).reshape(h, w, c)
     return array
+
+
+@dataclass
+class BBox:
+    """Dataclass to represent a bounding box in percentages.
+    This helps to draw a bounding box on the same image in different scalings.
+    """
+
+    x: float
+    y: float
+    w: float
+    h: float
+
+    def to_pixel(self, img_w: int, img_h: int) -> Tuple[int, int, int, int]:
+        """Calculates actual pixel of the bounding box based on the given image
+        size.
+
+        Args:
+            img_w (int): image width
+            img_h (int): image height
+
+        Returns:
+            Tuple[int, int, int, int]: (x, y, w, h) in pixel of the given image size
+        """
+        return (
+            int(self.x * img_w),
+            int(self.y * img_h),
+            int(self.w * img_w),
+            int(self.h * img_h),
+        )
+
+    @classmethod
+    def from_pixel(self, bbox: Tuple[int, int, int, int], img_w: int, img_h: int):
+        """Creates a new bounding box representation in percentage of the given
+        image width and height.
+
+        Args:
+            bbox (Tuple[int, int, int, int]): bounding box with (x, y, w, h) in pixels
+            img_w (int): image width
+            img_h (int): image height
+
+        Returns:
+            _type_: _bounding box in percentages of the given image widht and height.
+        """
+        return BBox(bbox[0] / img_w, bbox[1] / img_h, bbox[2] / img_w, bbox[3] / img_h)

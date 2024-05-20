@@ -1,6 +1,7 @@
 """ This module contains a video reader based on opencv capture """
 
 import logging
+import time
 
 import cv2
 import numpy as np
@@ -20,6 +21,8 @@ class VideoReader(FrameGrabber):
         self._source: str = source
         self._loop = False
         self._capture = cv2.VideoCapture(self._source)
+        self._fps = 15
+        self._last_frame_time = time.time()
         if not self._capture.isOpened():
             raise FileNotFoundError(f"Could not open {self._source}.")
         super().__init__(**kwargs)
@@ -43,6 +46,13 @@ class VideoReader(FrameGrabber):
 
     def get_frame(self) -> np.ndarray:
         """Return frame"""
+        # limit capture to fps
+        now = time.time()
+        # wait till limit reached
+        while (now - self._last_frame_time) < (1 / self._fps):
+            now = time.time()
+        self._last_frame_time = now
+        # get frame
         ret, frame = self._capture.read()
         if not ret:
             # Check if video is over

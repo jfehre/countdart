@@ -10,6 +10,7 @@ import {
 import { notifications } from "@mantine/notifications";
 import {
     IconActivity,
+    IconBug,
     IconLivePhoto,
     IconPerspective,
 } from "@tabler/icons-react";
@@ -135,6 +136,21 @@ export function WebSocketStream({
                 >
                     <Tooltip label="Activity View" position="bottom">
                         <IconActivity />
+                    </Tooltip>
+                </ActionIcon>
+                <ActionIcon
+                    variant={
+                        activeView === "ResultVisualizer" ? "filled" : "outline"
+                    }
+                    size="md"
+                    aria-label="ResultVisualizer"
+                    onClick={() => {
+                        changeImageView("ResultVisualizer");
+                        setActiveView("ResultVisualizer");
+                    }}
+                >
+                    <Tooltip label="Debug view" position="bottom">
+                        <IconBug />
                     </Tooltip>
                 </ActionIcon>
             </ActionIconGroup>

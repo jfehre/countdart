@@ -54,7 +54,7 @@ class DartboardModel:
         Returns:
             np.ndarray: Translation vector
         """
-        return np.array([[1, 0, 350], [0, 1, 350], [0, 0, 1]])
+        return np.array([[1, 0, 225], [0, 1, 225], [0, 0, 1]])
 
     def get_outer_point(self, label: str) -> Tuple[int, int, int]:
         """Returns coordinates of the outer crosspoint in the dartboard

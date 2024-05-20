@@ -13,6 +13,10 @@ from countdart.operators import (
     FrameGrabber,
     HomographyWarper,
 )
+from countdart.operators.img.bbox_detector import BBoxDetector
+from countdart.operators.img.hough_line_detector import HoughLineDetector
+from countdart.operators.img.result_visualizer import ResultVisualizer
+from countdart.operators.size_classifier import SizeClassifier
 
 logger = get_task_logger(__name__)
 
@@ -52,24 +56,33 @@ def process_camera(self, cam_db: schemas.Cam):
     cam.start()
 
     # create operators
-    img_operators = []
+    warper = None
     if cam_db.calibration_points:
-        img_operators.append(
-            HomographyWarper(
-                cam_db.calibration_points,
-                cam.image_size,
-                redis_key=f"cam_{cam_db.id}",
-            )
+        warper = HomographyWarper(
+            cam_db.calibration_points,
+            cam.image_size,
+            redis_key=f"cam_{cam_db.id}",
         )
-    img_operators.append(ChangeDetector(redis_key=f"cam_{cam_db.id}"))
+    motion = ChangeDetector(redis_key=f"cam_{cam_db.id}")
+    bbox_detector = BBoxDetector()
+    classifier = SizeClassifier()
+    line_detector = HoughLineDetector()
+    visualizer = ResultVisualizer(redis_key=f"cam_{cam_db.id}")
     fps_calculator = FpsCalculator(redis_key=f"cam_{cam_db.id}")
 
     # endless loop. Needs to be canceled by celery
     while not self.is_aborted():
         frame = cam()
-        # add image operators
-        for operator in img_operators:
-            operator(frame)
+        # calculate result
+        warper(frame)
+        motion_mask = motion(frame)
+        bbox, size = bbox_detector(motion_mask)
+        cls = classifier(size)
+        if cls == "dart":
+            line = line_detector(motion_mask, bbox)
+            visualizer(frame, bbox, cls, line)
+            # reset motion mask
+            motion(frame, learning_rate=1)
         fps_calculator()
 
     # task was aborted so shutdown gracefully

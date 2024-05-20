@@ -68,7 +68,9 @@ class HomographyWarper(BaseOperator):
             np.array: warped image
         """
         # warp image
-        img_dst = cv2.warpPerspective(image, self.warp_matrix, (700, 700))
+        img_dst = cv2.warpPerspective(
+            image, self.warp_matrix, (450, 450), flags=cv2.INTER_NEAREST
+        )
         # flip image (i dont know why...)
         img_dst = cv2.flip(img_dst, 0)
         return img_dst
