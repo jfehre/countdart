@@ -51,6 +51,8 @@ class BaseOperator(ABC):
             # encode if data is numpy
             if isinstance(data, np.ndarray):
                 data = encode_numpy(data)
+            else:
+                data = json.dumps(data)
             redis_result_key = f"{self.r_key}_{self.__class__.__name__}"
             self.r.set(redis_result_key, data)
 

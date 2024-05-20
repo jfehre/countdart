@@ -8,6 +8,8 @@ import numpy as np
 from countdart.operators.operator import BaseOperator
 from countdart.utils.misc import BBox
 
+__all__ = "BBoxDetector"
+
 
 class BBoxDetector(BaseOperator):
     """Detects a bounding box in a binary image.

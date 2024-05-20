@@ -1,10 +1,14 @@
 """This module contains a visualizer. This is mostly for debug purpose"""
 
+from typing import Tuple
+
 import cv2
 import numpy as np
 
-from countdart.operators.img.bbox_detector import BBox
 from countdart.operators.operator import BaseOperator
+from countdart.utils.misc import BBox, Line
+
+__all__ = "ResultVisualizer"
 
 
 class ResultVisualizer(BaseOperator):
@@ -16,7 +20,13 @@ class ResultVisualizer(BaseOperator):
         super().__init__(**kwargs)
 
     def call(
-        self, image: np.ndarray, bbox: BBox, label: str, line: np.ndarray
+        self,
+        image: np.ndarray,
+        bbox: BBox,
+        label: str,
+        line: Line,
+        score: str,
+        img_tip: Tuple[int, int],
     ) -> np.ndarray:
         """Visualize results in one image.
         Draws the bounding box on the given image, adds a label and finally
@@ -29,6 +39,8 @@ class ResultVisualizer(BaseOperator):
             bbox (BBox): found bounding box in percentage
             label (str): classified label of bounding box
             line (np.ndarray): found hough line in percentage of bbox
+            score (str): calculated dart score
+            img_tip(Tuple): Point2D of dart tip
 
         Returns:
             np.ndarray: visualized image
@@ -50,14 +62,31 @@ class ResultVisualizer(BaseOperator):
             color=(255, 0, 0),
             thickness=2,
         )
+        # draw score
+        vis_img = cv2.putText(
+            vis_img,
+            score,
+            (0, img_h),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            fontScale=2,
+            color=(255, 0, 0),
+            thickness=4,
+        )
+
         # draw line
-        # convert from percentage to pixel
-        if line.ndim > 0:
-            lx1 = int((line[0] * w) + x)
-            ly1 = int((line[1] * h) + y)
-            lx2 = int((line[2] * w) + x)
-            ly2 = int((line[3] * h) + y)
+        if line:
+            # convert from percentage to pixel
+            lx1, ly1, lx2, ly2 = line.to_pixel(w, h)
+            # draw line with offset of bounding box
             vis_img = cv2.line(
-                vis_img, (lx1, ly1), (lx2, ly2), color=(0, 0, 255), thickness=2
+                vis_img,
+                (lx1 + x, ly1 + y),
+                (lx2 + x, ly2 + y),
+                color=(0, 0, 255),
+                thickness=2,
             )
+
+        # draw point
+        if img_tip:
+            vis_img = cv2.circle(vis_img, img_tip, 2, color=(0, 255, 0), thickness=-1)
         return vis_img

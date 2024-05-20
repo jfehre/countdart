@@ -3,8 +3,10 @@
 import cv2
 import numpy as np
 
-from countdart.operators.img.bbox_detector import BBox
 from countdart.operators.operator import BaseOperator
+from countdart.utils.misc import BBox, Line
+
+__all__ = "HoughLineDetector"
 
 
 class HoughLineDetector(BaseOperator):
@@ -52,11 +54,6 @@ class HoughLineDetector(BaseOperator):
                 )
                 if dist > max_dist:
                     # convert to percentages
-                    new_line = [
-                        line[0] / roi_w,
-                        line[1] / roi_h,
-                        line[2] / roi_w,
-                        line[3] / roi_h,
-                    ]
+                    new_line = Line.from_pixel(line, roi_w, roi_h)
                     max_dist = dist
-        return np.array(new_line)
+        return new_line

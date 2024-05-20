@@ -3,6 +3,8 @@ from typing import Dict, Tuple
 
 from countdart.operators.operator import BaseOperator
 
+__all__ = "DartTipCalculator"
+
 
 class SizeClassifier(BaseOperator):
     """This class will classify a single float number,

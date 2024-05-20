@@ -21,6 +21,8 @@ class DartboardModel:
     bull = 31.8 / 2
     double_bull = 12.7 / 2
 
+    margin = 55
+
     # definition of segments inside the circle
     degree_of_segment = 18
     start_degree = degree_of_segment / 2
@@ -46,15 +48,6 @@ class DartboardModel:
         12,
         5,
     ]
-
-    def get_translation_vector(self) -> np.ndarray:
-        """Returns translation vector to translate 0, 0 to the top left
-        corner.
-
-        Returns:
-            np.ndarray: Translation vector
-        """
-        return np.array([[1, 0, 225], [0, 1, 225], [0, 0, 1]])
 
     def get_outer_point(self, label: str) -> Tuple[int, int, int]:
         """Returns coordinates of the outer crosspoint in the dartboard

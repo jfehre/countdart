@@ -13,10 +13,13 @@ from countdart.operators import (
     FrameGrabber,
     HomographyWarper,
 )
+from countdart.operators.darttip_calculator import DartTipCalculator
 from countdart.operators.img.bbox_detector import BBoxDetector
 from countdart.operators.img.hough_line_detector import HoughLineDetector
 from countdart.operators.img.result_visualizer import ResultVisualizer
+from countdart.operators.score_calculator import ScoreCalculator
 from countdart.operators.size_classifier import SizeClassifier
+from countdart.utils.dartboard_model import DartboardModel
 
 logger = get_task_logger(__name__)
 
@@ -55,6 +58,9 @@ def process_camera(self, cam_db: schemas.Cam):
     )
     cam.start()
 
+    # Dartboard model
+    dartboard_model = DartboardModel()
+
     # create operators
     warper = None
     if cam_db.calibration_points:
@@ -67,6 +73,8 @@ def process_camera(self, cam_db: schemas.Cam):
     bbox_detector = BBoxDetector()
     classifier = SizeClassifier()
     line_detector = HoughLineDetector()
+    tip_calculator = DartTipCalculator()
+    scorer = ScoreCalculator(dartboard_model, redis_key=f"cam_{cam_db.id}")
     visualizer = ResultVisualizer(redis_key=f"cam_{cam_db.id}")
     fps_calculator = FpsCalculator(redis_key=f"cam_{cam_db.id}")
 
@@ -80,9 +88,13 @@ def process_camera(self, cam_db: schemas.Cam):
         cls = classifier(size)
         if cls == "dart":
             line = line_detector(motion_mask, bbox)
-            visualizer(frame, bbox, cls, line)
-            # reset motion mask
-            motion(frame, learning_rate=1)
+            img_tip = tip_calculator(frame, bbox, line)
+            if img_tip is not None:
+                dartboard_pt = warper.warp_point_to_model(img_tip[0], img_tip[1])
+                score, _ = scorer(dartboard_pt)
+                visualizer(frame, bbox, cls, line, score, img_tip)
+                # reset motion mask
+                motion(frame, learning_rate=1)
         fps_calculator()
 
     # task was aborted so shutdown gracefully

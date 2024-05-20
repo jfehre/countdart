@@ -91,3 +91,48 @@ class BBox:
             _type_: _bounding box in percentages of the given image widht and height.
         """
         return BBox(bbox[0] / img_w, bbox[1] / img_h, bbox[2] / img_w, bbox[3] / img_h)
+
+
+@dataclass
+class Line:
+    """Dataclass to represent a line in percentages inside an image.
+    This helps to draw a line on the same image in different scalings.
+    """
+
+    x1: float
+    y1: float
+    x2: float
+    y2: float
+
+    def to_pixel(self, img_w: int, img_h: int) -> Tuple[int, int, int, int]:
+        """Calculates actual pixel of the line based on the given image
+        size.
+
+        Args:
+            img_w (int): image width
+            img_h (int): image height
+
+        Returns:
+            Tuple[int, int, int, int]: (x2, y2, x2, y2) in pixel of the given image size
+        """
+        return (
+            int(self.x1 * img_w),
+            int(self.y1 * img_h),
+            int(self.x2 * img_w),
+            int(self.y2 * img_h),
+        )
+
+    @classmethod
+    def from_pixel(self, line: Tuple[int, int, int, int], img_w: int, img_h: int):
+        """Creates a new line representation in percentage of the given
+        image width and height.
+
+        Args:
+            line (Tuple[int, int, int, int]): line with (x1, y1, x2, y2) in pixels
+            img_w (int): image width
+            img_h (int): image height
+
+        Returns:
+            _type_: _bounding box in percentages of the given image widht and height.
+        """
+        return Line(line[0] / img_w, line[1] / img_h, line[2] / img_w, line[3] / img_h)
