@@ -82,14 +82,15 @@ def process_camera(self, cam_db: schemas.Cam):
     while not self.is_aborted():
         frame = cam()
         # calculate result
-        warper(frame)
+        if warper:
+            warper(frame)
         motion_mask = motion(frame)
         bbox, size = bbox_detector(motion_mask)
         cls = classifier(size)
         if cls == "dart":
             line = line_detector(motion_mask, bbox)
             img_tip = tip_calculator(frame, bbox, line)
-            if img_tip is not None:
+            if img_tip and warper:
                 dartboard_pt = warper.warp_point_to_model(img_tip[0], img_tip[1])
                 score, _ = scorer(dartboard_pt)
                 visualizer(frame, bbox, cls, line, score, img_tip)

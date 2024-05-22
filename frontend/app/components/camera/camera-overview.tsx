@@ -41,6 +41,7 @@ export function CameraOverview({
 }: CameraOverviewProps): ReactElement {
     // Create modal state
     const [createModalState, createModalHandler] = useDisclosure(false);
+    const [createModalStateSim, createModalHandlerSim] = useDisclosure(false);
 
     // retrieve all cams
     const [cams, setCams] = useState<CamSchema[]>([]);
@@ -179,13 +180,13 @@ export function CameraOverview({
                 {/** Add Simulation (maybe delete later) */}
                 <Button
                     leftSection={<IconPlus />}
-                    onClick={createModalHandler.open}
+                    onClick={createModalHandlerSim.open}
                 >
                     Add Simulation
                 </Button>
                 <Modal
-                    opened={createModalState}
-                    onClose={createModalHandler.close}
+                    opened={createModalStateSim}
+                    onClose={createModalHandlerSim.close}
                     title="Add Simulation"
                     centered
                 >
