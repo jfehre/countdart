@@ -5,10 +5,11 @@ from typing import Dict, List
 
 from celery.contrib.abortable import AbortableTask
 from celery.utils.log import get_task_logger
+from pydantic import TypeAdapter
 
 from countdart.celery_app import celery_app
 from countdart.database import schemas
-from countdart.database.schemas.config import ConfigBaseModel
+from countdart.database.schemas.config import AllConfigModel
 from countdart.operators import (
     ChangeDetector,
     FpsCalculator,
@@ -70,11 +71,11 @@ class StandardProcedure(BaseProcedure):
     def run(self, cam_db: schemas.Cam, op_configs: Dict[str, List]):
         """start image processing to detect darts."""
         # convert configs
-        print(op_configs)
-        for k, v in op_configs.items():
-            op_configs[k] = [ConfigBaseModel(**x) for x in v]
+        for op, op_conf in op_configs.items():
+            op_configs[op] = [
+                TypeAdapter(AllConfigModel).validate_python(c) for c in op_conf
+            ]
         # initialize vars
-        print(op_configs)
         cam_db = schemas.Cam(**cam_db)
 
         # start camera

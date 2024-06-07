@@ -7,7 +7,7 @@ import numpy as np
 import redis
 from pydantic import TypeAdapter
 
-from countdart.database.schemas.config import AllConfigModel
+from countdart.database.schemas.config import AllConfigModel, ConfigBaseModel
 from countdart.utils.misc import encode_numpy
 from countdart.utils.registry import Registry
 
@@ -32,8 +32,6 @@ class BaseOperator(ABC):
         else:
             self._r = None
             self._r_key = None
-        # Set default config, so no attributes are missing
-        self.configure(self.get_config())
         # set changed config
         self.config = config
         if self.config:
@@ -111,7 +109,7 @@ class BaseOperator(ABC):
         can be set by user"""
         configs = []
         for param in dir(cls):
-            if isinstance(param, AllConfigModel):
+            if issubclass(param, ConfigBaseModel):
                 configs.append(param)
         return configs
 
@@ -123,7 +121,7 @@ class BaseOperator(ABC):
         Args:
             config (AllConfigModel): Given config
         """
-        setattr(self, config.name, config.value)
+        setattr(self, config.name, config)
 
     def configure(self, configs=List[AllConfigModel]):
         """configure operator"""

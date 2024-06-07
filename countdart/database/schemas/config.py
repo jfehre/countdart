@@ -38,7 +38,6 @@ class ConfigBaseModel(BaseModel):
     type: str
     default_value: Any
     description: Optional[str] = None
-    value: Optional[Any] = None
 
 
 class IntConfigModel(ConfigBaseModel):
@@ -119,7 +118,7 @@ class BooleanConfigModel(ConfigBaseModel):
     def ensure_value(cls, v, info):
         """ensure value to be not None, by setting it to default value"""
         # check type again, because all fields will be validated
-        if "type" not in info.data or info.data["type"] != "float":
+        if "type" not in info.data or info.data["type"] != "bool":
             raise ValueError("invalid type")
         return v if v else info.data["default_value"]
 

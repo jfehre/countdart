@@ -4,6 +4,7 @@ export interface DartboardSchema {
     id: string;
     cams: string[];
     active_celery_tasks: string[];
+    op_configs: Record<string, AllConfigSchema[]>;
 }
 
 export interface DartboardCreateSchema {
@@ -12,10 +13,11 @@ export interface DartboardCreateSchema {
 }
 
 export interface DartboardPatchSchema {
-    name: string | undefined;
-    active: boolean | undefined;
-    cams: string[] | undefined;
-    active_celery_tasks: string[] | undefined;
+    name?: string;
+    active?: boolean;
+    cams?: string[];
+    active_celery_tasks?: string[];
+    op_configs?: Record<string, AllConfigSchema[]>;
 }
 
 export interface CalibrationPoint {
@@ -53,7 +55,7 @@ export interface CamHardwareSchema {
     source: number;
 }
 
-export interface IntConfigSchema {
+export interface NumberConfigSchema {
     name: string;
     description: string | undefined;
     type: string;
@@ -83,4 +85,4 @@ export interface SelectConfigSchema {
 export type AllConfigSchema =
     | SelectConfigSchema
     | BooleanConfigSchema
-    | IntConfigSchema;
+    | NumberConfigSchema;

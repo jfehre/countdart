@@ -1,11 +1,15 @@
 "use client";
 
-import { getDartboard } from "../../services/api";
+import { getDartboard, patchDartboard } from "../../services/api";
 import React, { type ReactElement, useEffect, useState } from "react";
 import { notifications } from "@mantine/notifications";
 import { Stack, Tabs } from "@mantine/core";
 import { CameraOverview } from "@/app/components/camera/camera-overview";
-import { type DartboardSchema } from "@/app/types/schemas";
+import {
+    type DartboardPatchSchema,
+    type DartboardSchema,
+} from "@/app/types/schemas";
+import { DartboardSettings } from "@/app/components/dartboard/dartboard-settings";
 
 export default function Page({
     params,
@@ -28,6 +32,19 @@ export default function Page({
             });
     }, []);
 
+    // function to patch dartboard
+    const patchFunc = (patchData: DartboardPatchSchema): void => {
+        patchDartboard(dartboard?.id, patchData)
+            .then((response) => {})
+            .catch((error) => {
+                notifications.show({
+                    title: "Patch error",
+                    message: "Could not update Dartboard" + error,
+                    color: "red",
+                });
+            });
+    };
+
     return (
         <Stack>
             <h1>{dartboard?.name}</h1>
@@ -36,7 +53,6 @@ export default function Page({
                     <Tabs.Tab value="overview">Overview</Tabs.Tab>
                     <Tabs.Tab value="cameras">Cameras</Tabs.Tab>
                     <Tabs.Tab value="settings">Settings</Tabs.Tab>
-                    <Tabs.Tab value="calibration">Calibration</Tabs.Tab>
                 </Tabs.List>
 
                 <Tabs.Panel value="overview">No overview content</Tabs.Panel>
@@ -46,9 +62,11 @@ export default function Page({
                         setDartboard={setDartboard}
                     ></CameraOverview>
                 </Tabs.Panel>
-                <Tabs.Panel value="settings">No settings content</Tabs.Panel>
-                <Tabs.Panel value="calibration">
-                    No calibration content
+                <Tabs.Panel value="settings">
+                    <DartboardSettings
+                        dartboard={dartboard}
+                        patchFunc={patchFunc}
+                    />
                 </Tabs.Panel>
             </Tabs>
         </Stack>

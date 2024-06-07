@@ -1,6 +1,6 @@
 import {
     type AllConfigSchema,
-    type IntConfigSchema,
+    type NumberConfigSchema,
     type SelectConfigSchema,
     type BooleanConfigSchema,
 } from "@/app/types/schemas";
@@ -8,6 +8,7 @@ import React, { type ReactElement } from "react";
 import { IntComponent } from "./int-component";
 import { SelectComponent } from "./select-component";
 import { BooleanComponent } from "./boolean-component";
+import { FloatComponent } from "./float-component";
 
 /**
  * Properties for a settings component
@@ -16,7 +17,6 @@ import { BooleanComponent } from "./boolean-component";
  */
 export interface SettingComponentProps {
     config: AllConfigSchema;
-    key: string | number;
     onChange: (patchData: AllConfigSchema[]) => void;
 }
 
@@ -27,16 +27,24 @@ export interface SettingComponentProps {
  */
 export function SettingComponent({
     config,
-    key,
     onChange,
 }: SettingComponentProps): ReactElement {
     // Choose which type of component was received
     let component;
     switch (config.type) {
+        case "float":
+            component = (
+                <FloatComponent
+                    config={config as NumberConfigSchema}
+                    onChange={onChange}
+                />
+            );
+            break;
+
         case "int":
             component = (
                 <IntComponent
-                    config={config as IntConfigSchema}
+                    config={config as NumberConfigSchema}
                     onChange={onChange}
                 />
             );
@@ -58,9 +66,9 @@ export function SettingComponent({
             );
             break;
         default:
-            component = "dont know";
+            component = "no component for " + config.type;
     }
 
     // return specific settings type component
-    return <div key={key}>{component}</div>;
+    return <div>{component}</div>;
 }

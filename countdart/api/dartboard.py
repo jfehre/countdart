@@ -2,8 +2,10 @@
 Used to retrieve, create, update and delete dartboards
 """
 
+import json
 from typing import List
 
+import redis
 from celery.contrib.abortable import AbortableAsyncResult
 from fastapi import APIRouter, HTTPException, Query
 
@@ -78,12 +80,15 @@ def update_dartboard(
             updated_configs = update_config_dict(old_configs, dartboard.op_configs)
             dartboard.op_configs = updated_configs
         updated = crud.update_dartboard(dartboard_id, dartboard)
-        # use redis to apply config to worker processes
-        # r = redis.Redis(host="redis", port=6379)
-        # r.set(
-        #     f"cam_{cam_id}_config",
-        #     json.dumps({updated.type: [c.model_dump() for c in patch.cam_config]}),
-        # )
+        # use redis to apply config to all worker processes
+        r = redis.Redis(host="redis", port=6379)
+        cams = cam_crud.get_cams(id_list=dartboard.cams)
+        # communicate with each procedure in each cam
+        for cam in cams:
+            r.set(
+                f"cam_{cam.id}_config",
+                json.dumps(updated.model_dump()["op_configs"]),
+            )
     except NotFoundError as e:
         raise HTTPException(404) from e
     return updated

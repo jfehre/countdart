@@ -164,9 +164,12 @@ class USBCam(FrameGrabber):
                         # Special case for menu controls,
                         # because value is handled as string externally
                         if config.type == "select":
-                            ctrl.value = config.data.index(config.value)
+                            ctrl.value = list(ctrl.data.keys())[
+                                list(ctrl.data.values()).index(config.value)
+                            ]
                         else:
-                            ctrl.value = config.value
+                            if ctrl.is_writeable:
+                                ctrl.value = config.value
                 except KeyError:
                     logging.warning(f"Control {config.name} does not exist")
 

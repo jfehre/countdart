@@ -76,6 +76,7 @@ class VideoReader(FrameGrabber):
         configs.append(
             BooleanConfigModel(
                 name="_loop",
+                type="bool",
                 default_value=False,
                 value=self._loop,
             )

@@ -1,5 +1,7 @@
 """Change Detector Operator"""
 
+import logging
+
 import cv2
 import numpy as np
 
@@ -34,6 +36,7 @@ class ChangeDetector(BaseOperator):
         """Add new frame to change detector and return mask.
         Resizes the image.
         """
+        logging.info(f"resize value is {self.resize}")
         # resize image with scaling factor
         image = cv2.resize(image, None, fx=self.resize.value, fy=self.resize.value)
         mask = self._fgbg.apply(image, learningRate=learning_rate)

@@ -69,9 +69,6 @@ export function CameraOverview({
                 // patch dartboard
                 const patchData: DartboardPatchSchema = {
                     cams: newCams.map((cam) => cam.id),
-                    name: undefined,
-                    active: undefined,
-                    active_celery_tasks: undefined,
                 };
                 patchDartboard(dartboard?.id, patchData)
                     .then((response) => {
@@ -134,9 +131,6 @@ export function CameraOverview({
                 // Patch Dartboard
                 const patchData: DartboardPatchSchema = {
                     cams: newCams.map((cam) => cam.id),
-                    name: undefined,
-                    active: undefined,
-                    active_celery_tasks: undefined,
                 };
                 patchDartboard(dartboard?.id, patchData)
                     .then((response) => {
