@@ -8,12 +8,13 @@ import cv2
 import numpy as np
 
 from countdart.database.schemas import CalibrationPoint
-from countdart.operators.operator import BaseOperator
+from countdart.operators.operator import OPERATORS, BaseOperator
 from countdart.utils.dartboard_model import DartboardModel
 
 __all__ = "HomographyWarper"
 
 
+@OPERATORS.register_class
 class HomographyWarper(BaseOperator):
     """Homography warper. Will warp a given image onto a dartboard model.
     Needs to be initialized with calibration points to calculate
@@ -27,12 +28,16 @@ class HomographyWarper(BaseOperator):
         **kwargs,
     ) -> None:
         super().__init__(**kwargs)
-        self.dartboard_model = dartboard_model
-        if self.dartboard_model is None:
-            self.dartboard_model = DartboardModel()
+        self._dartboard_model = dartboard_model
+        if self._dartboard_model is None:
+            self._dartboard_model = DartboardModel()
         self.margin = 55
-        self.size = (self.dartboard_model.outer_double_ring + self.margin) * 2
         self.update_warp(calib_points, img_shape)
+
+    @property
+    def size(self):
+        """Return size of resulting image"""
+        return (self._dartboard_model.outer_double_ring + self.margin) * 2
 
     def update_warp(
         self, calib_points: List[CalibrationPoint], img_shape: np.ndarray
@@ -54,21 +59,21 @@ class HomographyWarper(BaseOperator):
             # points are given in percentage, so get the real value based on img shape
             img_points.append((point.x * img_shape[0], point.y * img_shape[1]))
             # get corresponding obj point from dartboard model
-            corr_dartboard_point = self.dartboard_model.get_outer_point(point.label)
+            corr_dartboard_point = self._dartboard_model.get_outer_point(point.label)
             obj_points.append(corr_dartboard_point)
-        self.img_points = np.array(img_points)
-        self.obj_points = np.array(obj_points)
+        self._img_points = np.array(img_points)
+        self._obj_points = np.array(obj_points)
         # find homography from object points to image points
-        h, _ = cv2.findHomography(self.obj_points, self.img_points)
+        h, _ = cv2.findHomography(self._obj_points, self._img_points)
         # find inverse, because we want to map points from image plane to object plane
-        self.h_inv = np.linalg.inv(h)
+        self._h_inv = np.linalg.inv(h)
         # translation matrix, because the world plane has negative points
         # and the top should be 20-1
-        self.translate = np.array(
+        self._translate = np.array(
             [[1, 0, self.size / 2], [0, 1, self.size / 2], [0, 0, 1]]
         )
         # combine homography with translation matrix
-        self.combined_warp = np.matmul(self.translate, self.h_inv)
+        self._combined_warp = np.matmul(self._translate, self._h_inv)
 
     def call(self, image: np.array, **kwargs) -> np.array:
         """Gets input image and warps it onto a dartboard model and
@@ -83,7 +88,10 @@ class HomographyWarper(BaseOperator):
         """
         # warp image
         img_dst = cv2.warpPerspective(
-            image, self.combined_warp, (self.size, self.size), flags=cv2.INTER_NEAREST
+            image,
+            self._combined_warp,
+            (self._size, self._size),
+            flags=cv2.INTER_NEAREST,
         )
         # flip image (i dont know why...)
         img_dst = cv2.flip(img_dst, 0)

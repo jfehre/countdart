@@ -31,7 +31,7 @@ def make_celery(app_name: str) -> Celery:
         app_name,
         broker=settings.CELERY_BROKER,
         backend=settings.CELERY_BACKEND,
-        include=["countdart.worker"],
+        include=["countdart.procedures"],
     )
     return celery_app
 

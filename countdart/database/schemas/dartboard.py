@@ -2,9 +2,11 @@
 a list of cameras and a state (active).
 May also contain more settings in the future.
 """
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from pydantic import ConfigDict, Field
+
+from countdart.database.schemas.config import AllConfigModel
 
 from .base import BaseModel, PyObjectId
 
@@ -23,6 +25,7 @@ class DartboardBase(BaseModel):
 
     name: str
     active: bool = False
+    type: str
 
 
 class Dartboard(DartboardBase):
@@ -31,6 +34,7 @@ class Dartboard(DartboardBase):
     id: PyObjectId = Field(alias="_id")
     model_config = ConfigDict(populate_by_name=True)
     cams: List[PyObjectId] = []
+    op_configs: Optional[Dict[str, List[AllConfigModel]]] = None
     active_celery_tasks: List[str] = []
 
 
@@ -49,3 +53,4 @@ class DartboardPatch(BaseModel):
     active: Optional[bool] = None
     cams: Optional[List[PyObjectId]] = None
     active_celery_tasks: Optional[List[str]] = None
+    op_configs: Optional[Dict[str, List[AllConfigModel]]] = None

@@ -3,12 +3,13 @@
 import cv2
 import numpy as np
 
-from countdart.operators.operator import BaseOperator
+from countdart.operators.operator import OPERATORS, BaseOperator
 from countdart.utils.misc import BBox, Line
 
 __all__ = "HoughLineDetector"
 
 
+@OPERATORS.register_class
 class HoughLineDetector(BaseOperator):
     """The HoughLineDetector is used to detect straight lines
     in an image. This operator is based on opencv HoughLinesP function.

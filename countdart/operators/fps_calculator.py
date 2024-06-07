@@ -1,11 +1,12 @@
 """ Operator to calculate fps on each call"""
 import time
 
-from countdart.operators.operator import BaseOperator
+from countdart.operators.operator import OPERATORS, BaseOperator
 
 __all__ = "FpsCalculator"
 
 
+@OPERATORS.register_class
 class FpsCalculator(BaseOperator):
     """This class will call current fps, based on the frequency it is called"""
 

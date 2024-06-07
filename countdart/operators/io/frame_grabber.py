@@ -8,8 +8,11 @@ import numpy as np
 import countdart.operators.io as io
 from countdart.database.schemas.cam import Cam
 from countdart.operators.operator import BaseOperator
+from countdart.utils.registry import Registry
 
 __all__ = ["FrameGrabber"]
+
+FRAME_GRABBERS = Registry("frame_grabbers")
 
 
 class FrameGrabber(BaseOperator, ABC):

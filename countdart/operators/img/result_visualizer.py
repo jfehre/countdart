@@ -5,12 +5,13 @@ from typing import Tuple
 import cv2
 import numpy as np
 
-from countdart.operators.operator import BaseOperator
+from countdart.operators.operator import OPERATORS, BaseOperator
 from countdart.utils.misc import BBox, Line
 
 __all__ = "ResultVisualizer"
 
 
+@OPERATORS.register_class
 class ResultVisualizer(BaseOperator):
     """An operator to visualize all results in an image.
     Returns the visualized image

@@ -8,6 +8,7 @@ export interface DartboardSchema {
 
 export interface DartboardCreateSchema {
     name: string;
+    type: string;
 }
 
 export interface DartboardPatchSchema {

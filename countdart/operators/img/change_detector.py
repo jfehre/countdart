@@ -1,12 +1,15 @@
 """Change Detector Operator"""
+
 import cv2
 import numpy as np
 
-from countdart.operators.operator import BaseOperator
+from countdart.database.schemas.config import FloatConfigModel
+from countdart.operators.operator import OPERATORS, BaseOperator
 
 __all__ = "ChangeDetector"
 
 
+@OPERATORS.register_class
 class ChangeDetector(BaseOperator):
     """Change detecter based on opencv Background Foreground Subtractor.
     Will be used to detect hand motion and darts on an empty board.
@@ -14,9 +17,17 @@ class ChangeDetector(BaseOperator):
     is less than 1.
     """
 
-    def __init__(self, resize: float = 0.5, **kwargs):
-        self.fgbg = cv2.bgsegm.createBackgroundSubtractorMOG()
-        self.resize = resize
+    resize = FloatConfigModel(
+        type="float",
+        name="resize",
+        default_value=0.5,
+        description="Factor to resize image",
+        max_value=1,
+        min_value=0,
+    )
+
+    def __init__(self, **kwargs):
+        self._fgbg = cv2.bgsegm.createBackgroundSubtractorMOG()
         super().__init__(**kwargs)
 
     def call(self, image: np.array, learning_rate=-1, **kwargs) -> np.array:
@@ -24,6 +35,6 @@ class ChangeDetector(BaseOperator):
         Resizes the image.
         """
         # resize image with scaling factor
-        image = cv2.resize(image, None, fx=self.resize, fy=self.resize)
-        mask = self.fgbg.apply(image, learningRate=learning_rate)
+        image = cv2.resize(image, None, fx=self.resize.value, fy=self.resize.value)
+        mask = self._fgbg.apply(image, learningRate=learning_rate)
         return mask

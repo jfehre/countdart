@@ -4,7 +4,7 @@ from fastapi import APIRouter
 
 from countdart.celery_app import celery_app
 from countdart.database.schemas import TaskOut
-from countdart.worker import test_celery
+from countdart.procedures.standard import test_celery
 
 router = APIRouter(prefix="/test", tags=["test"])
 

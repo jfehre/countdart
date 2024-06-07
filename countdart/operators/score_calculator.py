@@ -1,12 +1,13 @@
 """ Calculates score """
 import numpy as np
 
-from countdart.operators.operator import BaseOperator
+from countdart.operators.operator import OPERATORS, BaseOperator
 from countdart.utils.dartboard_model import DartboardModel
 
 __all__ = "ScoreCalculator"
 
 
+@OPERATORS.register_class
 class ScoreCalculator(BaseOperator):
     """Calculates score with the help of the dartboard model"""
 

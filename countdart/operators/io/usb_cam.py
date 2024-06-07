@@ -16,11 +16,12 @@ from countdart.database.schemas.config import (
     BooleanConfigModel,
     SelectConfigModel,
 )
-from countdart.operators.io.frame_grabber import FrameGrabber
+from countdart.operators.io.frame_grabber import FRAME_GRABBERS, FrameGrabber
 
 __all__ = ["USBCam"]
 
 
+@FRAME_GRABBERS.register_class
 class USBCam(FrameGrabber):
     """Implementation of an usb cam with v4l2py"""
 

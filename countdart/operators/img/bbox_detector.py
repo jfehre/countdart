@@ -5,12 +5,13 @@ from typing import Tuple
 import cv2
 import numpy as np
 
-from countdart.operators.operator import BaseOperator
+from countdart.operators.operator import OPERATORS, BaseOperator
 from countdart.utils.misc import BBox
 
 __all__ = "BBoxDetector"
 
 
+@OPERATORS.register_class
 class BBoxDetector(BaseOperator):
     """Detects a bounding box in a binary image.
     The bounding box is returned as percentages of the given image

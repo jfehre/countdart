@@ -1,12 +1,13 @@
 """ Calculate the tip of the dart """
 import numpy as np
 
-from countdart.operators.operator import BaseOperator
+from countdart.operators.operator import OPERATORS, BaseOperator
 from countdart.utils.misc import BBox, Line
 
 __all__ = "DartTipCalculator"
 
 
+@OPERATORS.register_class
 class DartTipCalculator(BaseOperator):
     """Calculates the exact point in image coordinates,
     where the dart is inside the board

@@ -28,6 +28,16 @@ const api: AxiosInstance = axios.create({
 export async function health(): Promise<AxiosResponse> {
     return await api.get("/health");
 }
+
+/**
+ * get dartboard procedure types
+ */
+export async function getDartboardProcedures(): Promise<
+    AxiosResponse<string[]>
+> {
+    return await api.get("/dartboards/types");
+}
+
 /**
  * Get all Dartboards
  */

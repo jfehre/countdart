@@ -5,27 +5,43 @@ Used to retrieve, create, update and delete dartboards
 from typing import List
 
 from celery.contrib.abortable import AbortableAsyncResult
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 
 from countdart.celery_app import celery_app
 from countdart.database import schemas
 from countdart.database.crud import cam as cam_crud
 from countdart.database.crud import dartboard as crud
 from countdart.database.db import NameAlreadyTakenError, NotFoundError
-from countdart.worker import process_camera
+from countdart.procedures.base import PROCEDURES
+from countdart.utils.misc import update_config_dict
 
-router = APIRouter(prefix="/dartboards", tags=["dartboard"])
+router = APIRouter(prefix="/dartboards", tags=["Dartboard"])
+
+
+@router.get("/types")
+def get_procedure_types() -> List[str]:
+    """Will return available types from registry"""
+    return PROCEDURES.registry.keys()
 
 
 @router.get("", response_model_by_alias=False)
-def get_dartboards() -> List[schemas.Dartboard]:
+def get_dartboards(
+    id_list: List[schemas.IdString] = Query(None),
+    cam: schemas.IdString = Query(None),
+) -> List[schemas.Dartboard]:
     """Retrieve all dartboards
+
+    Args:
+        id_list (List[schemas.IdString], optional):
+        If given only return dartboards within this list.
+        cam (schemas.IdString, optional): return only
+        dartboards, which contain given cam id
 
     Returns:
         List of dartboards
     """
     try:
-        result = crud.get_dartboards()
+        result = crud.get_dartboards(id_list=id_list, cam=cam)
     except NotFoundError as e:
         raise HTTPException(404) from e
     return result
@@ -56,7 +72,18 @@ def update_dartboard(
         Dartboard with given id
     """
     try:
+        # merge config dict and update
+        if dartboard.op_configs is not None:
+            old_configs = crud.get_dartboard(dartboard_id).op_configs
+            updated_configs = update_config_dict(old_configs, dartboard.op_configs)
+            dartboard.op_configs = updated_configs
         updated = crud.update_dartboard(dartboard_id, dartboard)
+        # use redis to apply config to worker processes
+        # r = redis.Redis(host="redis", port=6379)
+        # r.set(
+        #     f"cam_{cam_id}_config",
+        #     json.dumps({updated.type: [c.model_dump() for c in patch.cam_config]}),
+        # )
     except NotFoundError as e:
         raise HTTPException(404) from e
     return updated
@@ -108,10 +135,10 @@ def start_dartboard(
         cam = cam_crud.get_cam(cam_id)
         if cam.active:
             active_tasks.append(cam.active_task)
-        else:
-            r = process_camera.delay(cam.source, cam_id)
-            active_tasks.append(r.id)
-            cam_crud.update_cam(cam_id, schemas.CamPatch(active=True, active_task=r.id))
+        # else:
+        # r = process_camera.delay(cam.source, cam_id)
+        # active_tasks.append(r.id)
+        # cam_crud.update_cam(cam_id, schemas.CamPatch(active=True, active_task=r.id))
     # update active tasks
     result = crud.update_dartboard(
         dartboard_id,

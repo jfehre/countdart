@@ -1,6 +1,5 @@
 """ Base Operator """
 import json
-import logging
 from abc import ABC, abstractmethod
 from typing import Any, List
 
@@ -10,8 +9,11 @@ from pydantic import TypeAdapter
 
 from countdart.database.schemas.config import AllConfigModel
 from countdart.utils.misc import encode_numpy
+from countdart.utils.registry import Registry
 
 __all__ = "BaseOperator"
+
+OPERATORS = Registry("operators")
 
 
 class BaseOperator(ABC):
@@ -25,14 +27,16 @@ class BaseOperator(ABC):
 
     def __init__(self, redis_key: str = None, config: List[AllConfigModel] = None):
         if redis_key:
-            self.r = redis.Redis(host="redis", port=6379)
-            self.r_key = redis_key
+            self._r = redis.Redis(host="redis", port=6379)
+            self._r_key = redis_key
         else:
-            self.r = None
-            self.r_key = None
-        self.config = None
-        if config:
-            self.config = config
+            self._r = None
+            self._r_key = None
+        # Set default config, so no attributes are missing
+        self.configure(self.get_config())
+        # set changed config
+        self.config = config
+        if self.config:
             # configure
             self.configure(self.config)
 
@@ -47,14 +51,14 @@ class BaseOperator(ABC):
         Will append class name of operator to redis_key.
 
         """
-        if self.r:
+        if self._r:
             # encode if data is numpy
             if isinstance(data, np.ndarray):
                 data = encode_numpy(data)
             else:
                 data = json.dumps(data)
-            redis_result_key = f"{self.r_key}_{self.__class__.__name__}"
-            self.r.set(redis_result_key, data)
+            redis_result_key = f"{self._r_key}_{self.__class__.__name__}"
+            self._r.set(redis_result_key, data)
 
     def receive_config_from_redis(self):
         """Check redis if config for this operator changed.
@@ -69,8 +73,8 @@ class BaseOperator(ABC):
         After applying the changes, the config will be deleted from redis to avoid
         updating a second time.
         """
-        if self.r:
-            all_conf = self.r.get(f"{self.r_key}_config")
+        if self._r:
+            all_conf = self._r.get(f"{self._r_key}_config")
             if all_conf:
                 all_conf = json.loads(all_conf)
                 # check if config for this operator exists
@@ -86,7 +90,7 @@ class BaseOperator(ABC):
                     self.config = op_conf
                     self.configure(op_conf)
                 # delete config, because it was processed
-                self.r.set(f"{self.r_key}_config", json.dumps(all_conf))
+                self._r.set(f"{self._r_key}_config", json.dumps(all_conf))
 
     def __call__(self, *args, **kwargs):
         self.receive_config_from_redis()
@@ -97,18 +101,33 @@ class BaseOperator(ABC):
     def teardown(self):
         """Function to clean up code,
         e.g closing of file handlers and connections"""
-        if self.r is not None:
-            self.r.close()
+        if self._r is not None:
+            self._r.close()
+
+    @classmethod
+    def get_config(cls) -> List[AllConfigModel]:
+        """Return all attributes of operator which are of
+        type or subtype of AllConfigModel. These attributes
+        can be set by user"""
+        configs = []
+        for param in dir(cls):
+            if isinstance(param, AllConfigModel):
+                configs.append(param)
+        return configs
+
+    def set_config(self, config: AllConfigModel):
+        """Default function to set config of operator.
+        Set config as instance attribute with config name
+        and value (if it exists) or default_value.
+
+        Args:
+            config (AllConfigModel): Given config
+        """
+        setattr(self, config.name, config.value)
 
     def configure(self, configs=List[AllConfigModel]):
         """configure operator"""
         if configs is None:
             return
         for config in configs:
-            if hasattr(self, "set_config"):
-                self.set_config(config)
-            else:
-                logging.warning(
-                    f"Operator {self.__class__.__name__} does"
-                    + "not support configurations."
-                )
+            self.set_config(config)

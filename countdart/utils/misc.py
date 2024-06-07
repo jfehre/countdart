@@ -1,9 +1,11 @@
 """ Miscellaneous helper functions"""
 import struct
 from dataclasses import dataclass
-from typing import Tuple
+from typing import Any, Dict, List, Tuple
 
 import numpy as np
+
+from countdart.database.schemas.config import AllConfigModel
 
 
 def encode_numpy(array: np.ndarray) -> bytes:
@@ -46,6 +48,86 @@ def decode_numpy(bytes: bytes) -> np.ndarray:
     # Add slicing here, or else the array would differ from the original
     array = np.frombuffer(bytes[12:], dtype=np.uint8).reshape(h, w, c)
     return array
+
+
+def remove(lst: List, attr: str, value: str) -> Tuple[List, Any]:
+    """Removes item from list, where attribute of item matches
+    given value.
+    Returns updated list and removed item.
+
+    Args:
+        lst (List): List of item
+        attr (str): attribute, wich should match value
+        value (str): value of the given attribute to match
+
+    Returns:
+        Tuple[List, Any]: Updated List and removed item
+    """
+    updated = lst.copy()
+    deleted = None
+    for i, model in enumerate(lst):
+        if getattr(model, attr) == value:
+            deleted = updated.pop(i)
+    return updated, deleted
+
+
+def find(lst: List, attr: str, value: str) -> int:
+    """Return index of item where given attribute matches value.
+    Returns -1 if no item with given attribute exists in list.
+
+    Args:
+        lst (List): list
+        attr (str): attribute of config which should match.
+        value (str): value of given attribute to match
+
+    Returns:
+        int: index of config model in list. Returns -1 if it was not found
+    """
+    for i, dic in enumerate(lst):
+        if getattr(dic, attr) == value:
+            return i
+    return -1
+
+
+def update_config_list(old: List[AllConfigModel], new: List[AllConfigModel]) -> List:
+    """Update old list of config models with list of new config models
+
+    Args:
+        old_list List: old list
+        new_list List: new list
+
+    Returns:
+        List: updated List
+    """
+    for item in new:
+        idx = find(old, "name", item.name)
+        if idx != -1:
+            old_item = old[idx]
+            data = item.model_dump(exclude_unset=True)
+            updated_item = old_item.model_copy(update=data)
+            old[idx] = updated_item
+        else:
+            old.append(item)
+    return old
+
+
+def update_config_dict(
+    old: Dict[str, List[AllConfigModel]], new: Dict[str, List[AllConfigModel]]
+) -> Dict:
+    """Update old dict of config models with new dict of config models
+
+    Args:
+        old (Dict[str, List[AllConfigModel]]): old dict with configs
+        new (Dict[str, List[AllConfigModel]]): new dict with configs
+
+    Returns:
+        Dict: updated dict
+    """
+    for key, new_list in new.items():
+        old_list = old[key]
+        updated_list = update_config_list(old_list, new_list)
+        old[key] = updated_list
+    return old
 
 
 @dataclass

@@ -6,7 +6,7 @@ import asyncio
 import base64
 import io
 import json
-from typing import List, Optional, Tuple
+from typing import List, Optional
 
 import numpy as np
 import redis
@@ -24,11 +24,12 @@ from PIL import Image
 from countdart.celery_app import celery_app
 from countdart.database import schemas
 from countdart.database.crud import cam as crud
+from countdart.database.crud import dartboard as crud_dartboard
 from countdart.database.db import NameAlreadyTakenError, NotFoundError
 from countdart.database.schemas.config import AllConfigModel, DeleteConfigModel
 from countdart.operators import FrameGrabber, USBCam
-from countdart.utils.misc import decode_numpy
-from countdart.worker import process_camera
+from countdart.procedures.base import PROCEDURES
+from countdart.utils.misc import decode_numpy, remove, update_config_list
 
 router = APIRouter(prefix="/cams", tags=["Camera"])
 
@@ -233,7 +234,13 @@ def start_cam(
                 cam_id, schemas.CamPatch(active=False, active_task=None)
             )
     # Start camera
-    r = process_camera.delay(cam.model_dump())
+    # get dartboard to dynamically create procedure
+    dartboard = crud_dartboard.get_dartboards(cam=cam_id)[0]
+    algorithm = PROCEDURES.build(dartboard.model_dump())
+    # start procedure with cam
+    r = algorithm.delay(
+        cam.model_dump(), op_configs=dartboard.model_dump()["op_configs"]
+    )
     updated_cam = crud.update_cam(
         cam_id, schemas.CamPatch(active=True, active_task=r.id)
     )
@@ -328,49 +335,10 @@ def set_config(cam_id: schemas.IdString, config: List[AllConfigModel]) -> schema
     Returns:
         str: returns always "Done"
     """
-
-    def find(lst: List[AllConfigModel], attr: str, value: str) -> int:
-        """Return index of config model where attribute matches value.
-        Returns -1 if no config model with given attribute exists in list.
-
-        Args:
-            lst (List[AllConfigModel]): list of config models
-            attr (str): attribute of config which should match.
-            value (str): value of given attribute to match
-
-        Returns:
-            int: index of config model in list. Returns -1 if it was not found
-        """
-        for i, dic in enumerate(lst):
-            if getattr(dic, attr) == value:
-                return i
-        return -1
-
-    def update(old: List[AllConfigModel], new: List[AllConfigModel]) -> List:
-        """Update old list of config models with list of new config models
-
-        Args:
-            old_list List: old list
-            new_list List: new list
-
-        Returns:
-            List: updated List
-        """
-        for item in new:
-            idx = find(old, "name", item.name)
-            if idx != -1:
-                old_item = old[idx]
-                data = item.model_dump(exclude_unset=True)
-                updated_item = old_item.model_copy(update=data)
-                old[idx] = updated_item
-            else:
-                old.append(item)
-        return old
-
     # update db entry with cam config
     try:
         old_config = crud.get_cam(cam_id).cam_config
-        updated_config = update(old_config, config)
+        updated_config = update_config_list(old_config, config)
         patch = schemas.CamPatch(cam_config=updated_config)
         updated = crud.update_cam(cam_id, patch)
         # use redis to apply config to worker processes
@@ -400,27 +368,6 @@ def delete_config(cam_id: schemas.IdString, name: Optional[str] = None) -> schem
     Returns:
         schemas.Cam: updated cam
     """
-
-    def remove(
-        lst: List[AllConfigModel], attr: str, value: str
-    ) -> Tuple[List[AllConfigModel], AllConfigModel]:
-        """Removes config model from list, where attribute matches value.
-        Returns updated list and removed config model.
-
-        Args:
-            lst (List[AllConfigModel]): List of config models
-            attr (str): attribute, wich should match value
-            value (str): value of the given attribute to match
-
-        Returns:
-            Tuple[List[AllConfigModel], AllConfigModel]: Updated List and removed item
-        """
-        updated = lst.copy()
-        deleted = None
-        for i, model in enumerate(lst):
-            if getattr(model, attr) == value:
-                deleted = updated.pop(i)
-        return updated, deleted
 
     # save deleted configs to update live camera
     deletions = []

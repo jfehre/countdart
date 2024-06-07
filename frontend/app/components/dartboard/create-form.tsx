@@ -1,6 +1,6 @@
 import React, { type ReactElement } from "react";
 import { useForm } from "@mantine/form";
-import { Stack, TextInput, Button, Group } from "@mantine/core";
+import { Stack, TextInput, Button, Group, Select } from "@mantine/core";
 import { type DartboardCreateSchema } from "@/app/types/schemas";
 
 /**
@@ -13,6 +13,7 @@ export type DartboardCreateFunction = (values: DartboardCreateSchema) => void;
  */
 interface CreateDartboardFormProps {
     submit: DartboardCreateFunction;
+    procedures: string[];
 }
 
 /**
@@ -23,11 +24,13 @@ interface CreateDartboardFormProps {
  */
 export function CreateDartboardForm({
     submit,
+    procedures,
 }: CreateDartboardFormProps): ReactElement {
     // create mantine form
     const form = useForm({
         initialValues: {
             name: "",
+            type: "",
         },
     });
 
@@ -35,6 +38,11 @@ export function CreateDartboardForm({
         <Stack>
             <form onSubmit={form.onSubmit(submit)}>
                 <TextInput label="Name" {...form.getInputProps("name")} />
+                <Select
+                    label="Procedure"
+                    data={procedures}
+                    {...form.getInputProps("type")}
+                ></Select>
                 <Group justify="flex-end" mt="md">
                     <Button type="submit">Create</Button>
                 </Group>

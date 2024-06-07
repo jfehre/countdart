@@ -7,9 +7,10 @@ import cv2
 import numpy as np
 
 from countdart.database.schemas.config import AllConfigModel, BooleanConfigModel
-from countdart.operators.io.frame_grabber import FrameGrabber
+from countdart.operators.io.frame_grabber import FRAME_GRABBERS, FrameGrabber
 
 
+@FRAME_GRABBERS.register_class
 class VideoReader(FrameGrabber):
     """Frame grabber to read video specified by a path.
     Currently the video needs to be located inside the server.

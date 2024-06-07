@@ -1,11 +1,12 @@
 """ This module contains a size classifier """
 from typing import Dict, Tuple
 
-from countdart.operators.operator import BaseOperator
+from countdart.operators.operator import OPERATORS, BaseOperator
 
 __all__ = "DartTipCalculator"
 
 
+@OPERATORS.register_class
 class SizeClassifier(BaseOperator):
     """This class will classify a single float number,
     based on the given classes in the initialization.

@@ -5,6 +5,7 @@ import {
     getDartboards,
     createDartboard,
     deleteDartboard,
+    getDartboardProcedures,
 } from "../services/api";
 import { notifications } from "@mantine/notifications";
 import { Button, Group, Modal, Stack } from "@mantine/core";
@@ -25,8 +26,11 @@ export default function Page(): ReactElement {
     // Create modal state
     const [createModalState, createModalHandler] = useDisclosure(false);
 
-    // retrieve all dartboards
+    // retrieve all dartboards and types
     const [dartboards, setDartboards] = useState<DartboardSchema[]>([]);
+    const [dartboardProcedures, setDartboardProcedures] = useState<string[]>(
+        [],
+    );
     useEffect(() => {
         getDartboards()
             .then((response) => {
@@ -36,6 +40,19 @@ export default function Page(): ReactElement {
                 notifications.show({
                     title: "Connection error",
                     message: "Could not retrieve Boards: " + error,
+                    color: "red",
+                });
+            });
+        // get dartboard procedure types
+        getDartboardProcedures()
+            .then((response) => {
+                setDartboardProcedures(response.data);
+            })
+            .catch((error) => {
+                notifications.show({
+                    title: "Connection error",
+                    message:
+                        "Could not retrieve available procedures: " + error,
                     color: "red",
                 });
             });
@@ -107,7 +124,10 @@ export default function Page(): ReactElement {
                 title="Create Board"
                 centered
             >
-                <CreateDartboardForm submit={createBoard} />
+                <CreateDartboardForm
+                    submit={createBoard}
+                    procedures={dartboardProcedures}
+                />
             </Modal>
         </Stack>
     );
