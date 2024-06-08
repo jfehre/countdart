@@ -1,6 +1,5 @@
 """ This module contains a size classifier """
-from typing import Dict, Tuple
-
+from countdart.database.schemas.config import FloatConfigModel
 from countdart.operators.operator import OPERATORS, BaseOperator
 
 __all__ = "DartTipCalculator"
@@ -18,16 +17,37 @@ class SizeClassifier(BaseOperator):
     If no class was found it returns "none".
     """
 
-    def __init__(
-        self,
-        classes: Dict[str, Tuple[float, float]] = {
-            "dart": (0.005, 0.1),
-            "hand": (0.3, 0.6),
-        },
-        **kwargs,
-    ):
-        self.classes = classes
-        super().__init__(**kwargs)
+    dart_min = FloatConfigModel(
+        name="dart_min",
+        default_value=0.005,
+        description="minimum of hand classifier",
+        min_value=0,
+        max_value=1,
+    )
+
+    dart_max = FloatConfigModel(
+        name="dart_max",
+        default_value=0.1,
+        description="maximum of hand classifier",
+        min_value=0,
+        max_value=1,
+    )
+
+    hand_min = FloatConfigModel(
+        name="hand_min",
+        default_value=0.3,
+        description="minimum of hand classifier",
+        min_value=0,
+        max_value=1,
+    )
+
+    hand_max = FloatConfigModel(
+        name="hand_max",
+        default_value=0.6,
+        description="maximum of hand classifier",
+        min_value=0,
+        max_value=1,
+    )
 
     def call(self, size: float) -> str:
         """Check if a class for given size exists.
@@ -41,7 +61,9 @@ class SizeClassifier(BaseOperator):
             str: label of the found classification. "none" if no
             class was found
         """
-        for label, c in self.classes.items():
-            if c[0] <= size <= c[1]:
-                return label
-        return "none"
+        if self.hand_min.value <= size <= self.hand_max.value:
+            return "hand"
+        elif self.dart_min.value <= size <= self.dart_max.value:
+            return "dart"
+        else:
+            return "none"

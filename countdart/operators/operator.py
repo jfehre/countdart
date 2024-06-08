@@ -108,9 +108,15 @@ class BaseOperator(ABC):
         type or subtype of AllConfigModel. These attributes
         can be set by user"""
         configs = []
-        for param in dir(cls):
-            if issubclass(param, ConfigBaseModel):
-                configs.append(param)
+        attributes = [
+            a
+            for a in dir(cls)
+            if not a.startswith("_") and not callable(getattr(cls, a))
+        ]
+        for attr in attributes:
+            attr = getattr(cls, attr)
+            if isinstance(attr, ConfigBaseModel):
+                configs.append(attr)
         return configs
 
     def set_config(self, config: AllConfigModel):

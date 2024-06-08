@@ -2,7 +2,7 @@
 
 from typing import Any, List, Optional, Union
 
-from pydantic import ValidationInfo, field_validator
+from pydantic import Field, ValidationInfo, field_validator
 
 from .base import BaseModel
 
@@ -47,7 +47,7 @@ class IntConfigModel(ConfigBaseModel):
     max_value: int
     min_value: int
     default_value: int
-    value: Optional[int] = None
+    value: Optional[int] = Field(default=None, validate_default=True)
 
     @field_validator("type")
     def check_type(cls, v, info):
@@ -77,7 +77,7 @@ class FloatConfigModel(ConfigBaseModel):
     max_value: float
     min_value: float
     default_value: float
-    value: Optional[float] = None
+    value: Optional[float] = Field(default=None, validate_default=True)
 
     @field_validator("type")
     def check_type(cls, v, info):
@@ -105,7 +105,7 @@ class BooleanConfigModel(ConfigBaseModel):
 
     type: str = "bool"
     default_value: bool
-    value: Optional[bool] = None
+    value: Optional[bool] = Field(default=None, validate_default=True)
 
     @field_validator("type")
     def check_type(cls, v):

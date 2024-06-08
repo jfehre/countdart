@@ -6,7 +6,7 @@ import time
 import cv2
 import numpy as np
 
-from countdart.database.schemas.config import AllConfigModel, BooleanConfigModel
+from countdart.database.schemas.config import BooleanConfigModel, IntConfigModel
 from countdart.operators.io.frame_grabber import FRAME_GRABBERS, FrameGrabber
 
 
@@ -18,11 +18,23 @@ class VideoReader(FrameGrabber):
     is saved.
     """
 
+    loop = BooleanConfigModel(
+        name="loop",
+        default_value=False,
+        description="Loop video",
+    )
+
+    fps = IntConfigModel(
+        name="fps",
+        default_value=15,
+        description="Limit fps to given value",
+        min_value=0,
+        max_value=30,
+    )
+
     def __init__(self, source: str, **kwargs):
         self._source: str = source
-        self._loop = False
         self._capture = cv2.VideoCapture(self._source)
-        self._fps = 15
         self._last_frame_time = time.time()
         if not self._capture.isOpened():
             raise FileNotFoundError(f"Could not open {self._source}.")
@@ -50,7 +62,7 @@ class VideoReader(FrameGrabber):
         # limit capture to fps
         now = time.time()
         # wait till limit reached
-        while (now - self._last_frame_time) < (1 / self._fps):
+        while (now - self._last_frame_time) < (1 / self.fps.value):
             now = time.time()
         self._last_frame_time = now
         # get frame
@@ -60,7 +72,7 @@ class VideoReader(FrameGrabber):
             if self._capture.get(cv2.CAP_PROP_POS_FRAMES) == self._capture.get(
                 cv2.CAP_PROP_FRAME_COUNT
             ):
-                if self._loop:
+                if self.loop.value:
                     self._capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
                     ret, frame = self._capture.read()
                 else:
@@ -69,20 +81,3 @@ class VideoReader(FrameGrabber):
                 logging.warning("Failed to capture frame")
 
         return np.array(frame)
-
-    def get_config(self):
-        """Return all configs"""
-        configs = []
-        configs.append(
-            BooleanConfigModel(
-                name="_loop",
-                type="bool",
-                default_value=False,
-                value=self._loop,
-            )
-        )
-        return configs
-
-    def set_config(self, config: AllConfigModel):
-        """Set config."""
-        setattr(self, config.name, config.value)

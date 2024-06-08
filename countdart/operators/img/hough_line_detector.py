@@ -3,6 +3,7 @@
 import cv2
 import numpy as np
 
+from countdart.database.schemas.config import FloatConfigModel, IntConfigModel
 from countdart.operators.operator import OPERATORS, BaseOperator
 from countdart.utils.misc import BBox, Line
 
@@ -15,8 +16,48 @@ class HoughLineDetector(BaseOperator):
     in an image. This operator is based on opencv HoughLinesP function.
     """
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    rho = FloatConfigModel(
+        name="rho",
+        default_value=1,
+        description="Distance resolution of the accumulator in pixels",
+        max_value=500,
+        min_value=0,
+    )
+
+    theta = FloatConfigModel(
+        name="theta",
+        default_value=45,
+        description="Angle resolution of the accumulator in degree",
+        max_value=360,
+        min_value=0,
+    )
+
+    threshold = IntConfigModel(
+        name="threshold",
+        default_value=10,
+        description="Accumulator threshold. Only those lines are"
+        "returned that get enough votes (> threshold)",
+        max_value=500,
+        min_value=0,
+    )
+
+    min_line_length = FloatConfigModel(
+        name="min_line_length",
+        default_value=70,
+        description="Minimum line length."
+        "Line segments shorter than that are rejected",
+        max_value=500,
+        min_value=0,
+    )
+
+    max_line_gap = FloatConfigModel(
+        name="max_line_gap",
+        default_value=20,
+        description="Maximum allowed gap between points"
+        "on the same line to link them",
+        max_value=500,
+        min_value=0,
+    )
 
     def call(self, image: np.ndarray, roi: BBox):
         """Receives an image and a region of interest as bounding box.
@@ -42,7 +83,15 @@ class HoughLineDetector(BaseOperator):
         # edge detector
         # canny = cv2.Canny(roi, 50, 200, None, 3)
         # hough line detector
-        lines = cv2.HoughLinesP(roi, 1, np.pi / 45, 10, None, 70, 20)
+        lines = cv2.HoughLinesP(
+            roi,
+            self.rho.value,
+            np.pi / self.theta.value,
+            self.threshold.value,
+            None,
+            self.min_line_length.value,
+            self.max_line_gap.value,
+        )
         # select longest line
         new_line = None
         max_dist = 0

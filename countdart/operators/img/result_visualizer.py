@@ -17,9 +17,6 @@ class ResultVisualizer(BaseOperator):
     Returns the visualized image
     """
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
     def call(
         self,
         image: np.ndarray,

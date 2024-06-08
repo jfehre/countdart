@@ -8,6 +8,7 @@ import cv2
 import numpy as np
 
 from countdart.database.schemas import CalibrationPoint
+from countdart.database.schemas.config import IntConfigModel
 from countdart.operators.operator import OPERATORS, BaseOperator
 from countdart.utils.dartboard_model import DartboardModel
 
@@ -20,6 +21,14 @@ class HomographyWarper(BaseOperator):
     Needs to be initialized with calibration points to calculate
     """
 
+    margin = IntConfigModel(
+        name="margin",
+        default_value=55,
+        description="Margin to add around warped dartboard",
+        max_value=200,
+        min_value=0,
+    )
+
     def __init__(
         self,
         calib_points: List[CalibrationPoint],
@@ -31,7 +40,6 @@ class HomographyWarper(BaseOperator):
         self._dartboard_model = dartboard_model
         if self._dartboard_model is None:
             self._dartboard_model = DartboardModel()
-        self.margin = 55
         self.update_warp(calib_points, img_shape)
 
     @property

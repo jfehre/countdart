@@ -2,6 +2,7 @@
 import cv2
 import numpy as np
 
+from countdart.database.schemas.config import IntConfigModel
 from countdart.operators.operator import BaseOperator
 
 __all__ = ["VideoWriter"]
@@ -13,11 +14,18 @@ class VideoWriter(BaseOperator):
     Writes frames to the given path
     """
 
+    fps = IntConfigModel(
+        name="fps",
+        default_value=15,
+        description="Limit fps to given value",
+        min_value=0,
+        max_value=30,
+    )
+
     def __init__(self, path: str):
         self._path = path
         self._video_writer = None
         self._fourcc = cv2.VideoWriter.fourcc(*"MJPG")
-        self._fps = 20
         super().__init__()
 
     def call(self, frame: np.ndarray):
@@ -27,7 +35,7 @@ class VideoWriter(BaseOperator):
             frame_shape = tuple(reversed(frame.shape[:2]))
             is_color = len(frame.shape) == 3 and frame.shape[2] == 3
             self._video_writer = cv2.VideoWriter(
-                self._path, self._fourcc, self._fps, frame_shape, isColor=is_color
+                self._path, self._fourcc, self.fps.value, frame_shape, isColor=is_color
             )
             if not self._video_writer.isOpened():
                 raise OSError(f"Could not open {self._path=}.")
