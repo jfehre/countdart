@@ -34,7 +34,7 @@ class HoughLineDetector(BaseOperator):
 
     threshold = IntConfigModel(
         name="threshold",
-        default_value=10,
+        default_value=50,
         description="Accumulator threshold. Only those lines are"
         "returned that get enough votes (> threshold)",
         max_value=500,
@@ -52,7 +52,7 @@ class HoughLineDetector(BaseOperator):
 
     max_line_gap = FloatConfigModel(
         name="max_line_gap",
-        default_value=20,
+        default_value=70,
         description="Maximum allowed gap between points"
         "on the same line to link them",
         max_value=500,

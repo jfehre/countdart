@@ -19,7 +19,7 @@ class ChangeDetector(BaseOperator):
 
     resize = FloatConfigModel(
         name="resize",
-        default_value=0.5,
+        default_value=1,
         description="Factor to resize image",
         max_value=1,
         min_value=0,

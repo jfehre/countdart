@@ -45,7 +45,7 @@ class HomographyWarper(BaseOperator):
     @property
     def size(self):
         """Return size of resulting image"""
-        return (self._dartboard_model.outer_double_ring + self.margin) * 2
+        return (self._dartboard_model.outer_double_ring + self.margin.value) * 2
 
     def update_warp(
         self, calib_points: List[CalibrationPoint], img_shape: np.ndarray
@@ -98,7 +98,7 @@ class HomographyWarper(BaseOperator):
         img_dst = cv2.warpPerspective(
             image,
             self._combined_warp,
-            (self._size, self._size),
+            (self.size, self.size),
             flags=cv2.INTER_NEAREST,
         )
         # flip image (i dont know why...)
@@ -116,7 +116,7 @@ class HomographyWarper(BaseOperator):
             Tuple[int, int]: point in dartboard world coordinate
         """
         p = (x, y)
-        matrix = self.h_inv
+        matrix = self._h_inv
         # https://stackoverflow.com/a/57400980
         px = (matrix[0][0] * p[0] + matrix[0][1] * p[1] + matrix[0][2]) / (
             (matrix[2][0] * p[0] + matrix[2][1] * p[1] + matrix[2][2])
