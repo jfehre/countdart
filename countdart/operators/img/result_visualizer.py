@@ -44,7 +44,7 @@ class ResultVisualizer(BaseOperator):
             np.ndarray: visualized image
         """
         img_h, img_w, _ = image.shape
-        x, y, w, h = bbox.to_pixel(img_w, img_h)
+        x, y, w, h = bbox.to_pixel(img_h, img_w)
         vis_img = image.copy()
         # draw bbox on image
         vis_img = cv2.rectangle(
@@ -74,7 +74,7 @@ class ResultVisualizer(BaseOperator):
         # draw line
         if line:
             # convert from percentage to pixel
-            lx1, ly1, lx2, ly2 = line.to_pixel(w, h)
+            lx1, ly1, lx2, ly2 = line.to_pixel(h, w)
             # draw line with offset of bounding box
             vis_img = cv2.line(
                 vis_img,

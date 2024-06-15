@@ -49,7 +49,7 @@ class DartboardModel:
         5,
     ]
 
-    def get_outer_point(self, label: str) -> Tuple[int, int, int]:
+    def get_outer_point(self, label: str) -> Tuple[int, int]:
         """Returns coordinates of the outer crosspoint in the dartboard
         coordinate system, between two given segments.
         The segments are given as a string in the format "s1 | s2",

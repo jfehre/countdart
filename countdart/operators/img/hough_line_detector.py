@@ -77,7 +77,7 @@ class HoughLineDetector(BaseOperator):
         """
         img_h, img_w = image.shape
         # convert to pixel
-        x, y, w, h = roi.to_pixel(img_w, img_h)
+        x, y, w, h = roi.to_pixel(img_h, img_w)
         roi = image[y : y + h, x : x + w]
         roi_h, roi_w = roi.shape
         # edge detector
@@ -104,6 +104,6 @@ class HoughLineDetector(BaseOperator):
                 )
                 if dist > max_dist:
                     # convert to percentages
-                    new_line = Line.from_pixel(line, roi_w, roi_h)
+                    new_line = Line.from_pixel(line, roi_h, roi_w)
                     max_dist = dist
         return new_line

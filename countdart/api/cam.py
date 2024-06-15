@@ -62,8 +62,10 @@ async def websocket_endpoint(cam_id: schemas.IdString, websocket: WebSocket):
             # context switch and serve multiple request concurrently
             # receive_text is also needed to update state of connection:
             # https://github.com/tiangolo/fastapi/discussions/9031#discussion-4911299
+            # Important: you need to wait as long as 0.001, otherwise disconnections
+            # will not be received, because the wait time is too short
             try:
-                operator = await asyncio.wait_for(websocket.receive_text(), 0.0001)
+                operator = await asyncio.wait_for(websocket.receive_text(), 0.001)
             except asyncio.TimeoutError:
                 pass
             # Get current values from key

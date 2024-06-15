@@ -37,7 +37,7 @@ class USBCam(FrameGrabber):
     def image_size(self):
         """Get image size"""
         format = self.cam.get_format(BufferType.VIDEO_CAPTURE)
-        return format.width, format.height, 3
+        return int(format.height), int(format.width), 3
 
     def start(self):
         """Starting the camera stream"""

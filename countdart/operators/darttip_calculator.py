@@ -34,7 +34,7 @@ class DartTipCalculator(BaseOperator):
 
         img_h, img_w, _ = image.shape
         # convert from percentage to pixel
-        roi_x, roi_y, roi_w, roi_h = roi.to_pixel(img_w, img_h)
+        roi_x, roi_y, roi_w, roi_h = roi.to_pixel(img_h, img_w)
         # draw line
         # draw line
         if line:
@@ -44,7 +44,7 @@ class DartTipCalculator(BaseOperator):
                 ly1,
                 lx2,
                 ly2,
-            ) = line.to_pixel(roi_w, roi_h)
+            ) = line.to_pixel(roi_h, roi_w)
             # return tip of the dart.
             # I currently assume the tip is always on the bottom of the image
             if ly1 < ly2:

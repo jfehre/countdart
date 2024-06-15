@@ -45,7 +45,7 @@ class VideoReader(FrameGrabber):
         """Get image size"""
         w = self._capture.get(cv2.CAP_PROP_FRAME_WIDTH)
         h = self._capture.get(cv2.CAP_PROP_FRAME_HEIGHT)
-        return w, h, 3
+        return int(h), int(w), 3
 
     def start(self):
         """Start camera. Does nothing because

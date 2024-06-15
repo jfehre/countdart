@@ -141,13 +141,13 @@ class BBox:
     w: float
     h: float
 
-    def to_pixel(self, img_w: int, img_h: int) -> Tuple[int, int, int, int]:
+    def to_pixel(self, img_h: int, img_w: int) -> Tuple[int, int, int, int]:
         """Calculates actual pixel of the bounding box based on the given image
         size.
 
         Args:
-            img_w (int): image width
-            img_h (int): image height
+            img_h (int): image width
+            img_w (int): image height
 
         Returns:
             Tuple[int, int, int, int]: (x, y, w, h) in pixel of the given image size
@@ -160,14 +160,14 @@ class BBox:
         )
 
     @classmethod
-    def from_pixel(self, bbox: Tuple[int, int, int, int], img_w: int, img_h: int):
+    def from_pixel(self, bbox: Tuple[int, int, int, int], img_h: int, img_w: int):
         """Creates a new bounding box representation in percentage of the given
         image width and height.
 
         Args:
             bbox (Tuple[int, int, int, int]): bounding box with (x, y, w, h) in pixels
-            img_w (int): image width
-            img_h (int): image height
+            img_h (int): image width
+            img_w (int): image height
 
         Returns:
             _type_: _bounding box in percentages of the given image widht and height.
@@ -186,13 +186,13 @@ class Line:
     x2: float
     y2: float
 
-    def to_pixel(self, img_w: int, img_h: int) -> Tuple[int, int, int, int]:
+    def to_pixel(self, img_h: int, img_w: int) -> Tuple[int, int, int, int]:
         """Calculates actual pixel of the line based on the given image
         size.
 
         Args:
-            img_w (int): image width
-            img_h (int): image height
+            img_h (int): image width
+            img_w (int): image height
 
         Returns:
             Tuple[int, int, int, int]: (x2, y2, x2, y2) in pixel of the given image size
@@ -205,14 +205,14 @@ class Line:
         )
 
     @classmethod
-    def from_pixel(self, line: Tuple[int, int, int, int], img_w: int, img_h: int):
+    def from_pixel(self, line: Tuple[int, int, int, int], img_h: int, img_w: int):
         """Creates a new line representation in percentage of the given
         image width and height.
 
         Args:
             line (Tuple[int, int, int, int]): line with (x1, y1, x2, y2) in pixels
-            img_w (int): image width
-            img_h (int): image height
+            img_h (int): image width
+            img_w (int): image height
 
         Returns:
             _type_: _bounding box in percentages of the given image widht and height.

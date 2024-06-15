@@ -44,7 +44,7 @@ class BBoxDetector(BaseOperator):
         # bounding box
         bbox = cv2.boundingRect(image)
         # scale bbox to percentage of image
-        bbox_percentage = BBox.from_pixel(bbox, img_w, img_h)
+        bbox_percentage = BBox.from_pixel(bbox, img_h, img_w)
         # count nonzero percentage
         bbox_ratio = (bbox[2] * bbox[3]) / (img_w * img_h)
         return bbox_percentage, bbox_ratio
