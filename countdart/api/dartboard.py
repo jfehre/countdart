@@ -9,12 +9,14 @@ import redis
 from celery.contrib.abortable import AbortableAsyncResult
 from fastapi import APIRouter, HTTPException, Query
 
+from countdart.api.cam import start_cam, stop_cam
 from countdart.celery_app import celery_app
 from countdart.database import schemas
 from countdart.database.crud import cam as cam_crud
 from countdart.database.crud import dartboard as crud
 from countdart.database.db import NameAlreadyTakenError, NotFoundError
 from countdart.procedures.base import PROCEDURES
+from countdart.procedures.collector import MainCollector
 from countdart.utils.misc import update_config_dict
 
 router = APIRouter(prefix="/dartboards", tags=["Dartboard"])
@@ -131,50 +133,61 @@ def start_dartboard(
         schemas.Dartboard: Updated Dartboard
     """
     try:
-        result = crud.get_dartboard(dartboard_id)
+        dartboard = crud.get_dartboard(dartboard_id)
     except NotFoundError as e:
         raise HTTPException(404) from e
+    # check if dartboard is not active
+    if dartboard.active:
+        r = celery_app.AsyncResult(dartboard.active_task)
+        if r.status == "PENDING":
+            return dartboard
+        elif r.status == "FAILURE":
+            dartboard = crud.update_dartboard(
+                dartboard_id, schemas.DartboardPatch(active=False, active_task=None)
+            )
+            raise HTTPException(
+                500, "Active task failed. Set dartboard to inactive. Retry again"
+            )
+        else:
+            dartboard = crud.update_dartboard(
+                dartboard_id, schemas.DartboardPatch(active=False, active_task=None)
+            )
     # start cams
-    active_tasks = []
-    for cam_id in result.cams:
-        cam = cam_crud.get_cam(cam_id)
-        if cam.active:
-            active_tasks.append(cam.active_task)
-        # else:
-        # r = process_camera.delay(cam.source, cam_id)
-        # active_tasks.append(r.id)
-        # cam_crud.update_cam(cam_id, schemas.CamPatch(active=True, active_task=r.id))
-    # update active tasks
-    result = crud.update_dartboard(
-        dartboard_id,
-        schemas.DartboardPatch(active_celery_tasks=active_tasks, active=True),
+    for cam_id in dartboard.cams:
+        # start cams
+        start_cam(cam_id)
+
+    # start main task
+    r = MainCollector().delay(dartboard.model_dump())
+    updated_dartboard = crud.update_dartboard(
+        dartboard_id, schemas.DartboardPatch(active=True, active_task=r.id)
     )
-    return result
+    return updated_dartboard
 
 
 @router.get("/{dartboard_id}/stop")
 def stop_dartboard(
     dartboard_id: schemas.IdString,
 ) -> schemas.Dartboard:
-    """Will stop all active worker tasks at the moment
+    """Will stop the main task and all cameras at the moment
 
     Returns:
         schemas.TaskOut: Information about the started Task
     """
     try:
-        result = crud.get_dartboard(dartboard_id)
+        dartboard = crud.get_dartboard(dartboard_id)
     except NotFoundError as e:
         raise HTTPException(404) from e
-    # get active tasks and stop them
-    active_tasks = result.active_celery_tasks
-    for task_id in active_tasks:
-        res = AbortableAsyncResult(task_id, app=celery_app)
+
+    if dartboard.active:
+        # stop cams
+        for cam_id in dartboard.cams:
+            stop_cam(cam_id)
+        # stop task
+        res = AbortableAsyncResult(dartboard.active_task, app=celery_app)
         res.abort()
-    # set to inactive
-    for cam in result.cams:
-        cam_crud.update_cam(cam, schemas.CamPatch(active=False, active_task=None))
-    # update active tasks
-    result = crud.update_dartboard(
-        dartboard_id, schemas.DartboardPatch(active_celery_tasks=[], active=False)
-    )
-    return result
+        dartboard = crud.update_dartboard(
+            dartboard_id, schemas.DartboardPatch(active=False, active_task=None)
+        )
+
+    return dartboard

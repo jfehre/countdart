@@ -2,7 +2,7 @@
 a list of cameras and a state (active).
 May also contain more settings in the future.
 """
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 
 from pydantic import ConfigDict, Field
 
@@ -35,7 +35,7 @@ class Dartboard(DartboardBase):
     model_config = ConfigDict(populate_by_name=True)
     cams: List[PyObjectId] = []
     op_configs: Optional[Dict[str, List[AllConfigModel]]] = None
-    active_celery_tasks: List[str] = []
+    active_task: Union[str, None] = None
 
 
 class DartboardCreate(DartboardBase):
@@ -52,5 +52,5 @@ class DartboardPatch(BaseModel):
     name: Optional[str] = None
     active: Optional[bool] = None
     cams: Optional[List[PyObjectId]] = None
-    active_celery_tasks: Optional[List[str]] = None
+    active_task: Optional[Union[str, None]] = None
     op_configs: Optional[Dict[str, List[AllConfigModel]]] = None

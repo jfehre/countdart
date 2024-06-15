@@ -88,6 +88,24 @@ export async function deleteDartboard(
 }
 
 /**
+ * Start Dartboard
+ */
+export async function startDartboard(
+    id: string,
+): Promise<AxiosResponse<DartboardSchema>> {
+    return await api.get("/dartboards/" + id + "/start");
+}
+
+/**
+ * Stop Cam
+ */
+export async function stopDartboard(
+    id: string,
+): Promise<AxiosResponse<DartboardSchema>> {
+    return await api.get("/dartboards/" + id + "/stop");
+}
+
+/**
  * Get Cams. Optional parameter contains list of all cam ids
  * to specify which cams should be returned.
  * If the list is empty send a request with [""]
