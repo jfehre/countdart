@@ -43,7 +43,7 @@ class SizeClassifier(BaseOperator):
 
     hand_max = FloatConfigModel(
         name="hand_max",
-        default_value=0.6,
+        default_value=1,
         description="maximum of hand classifier",
         min_value=0,
         max_value=1,

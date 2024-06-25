@@ -24,6 +24,7 @@ class ResultVisualizer(BaseOperator):
         label: str,
         line: Line,
         score: str,
+        conf: float,
         img_tip: Tuple[int, int],
     ) -> np.ndarray:
         """Visualize results in one image.
@@ -38,6 +39,7 @@ class ResultVisualizer(BaseOperator):
             label (str): classified label of bounding box
             line (np.ndarray): found hough line in percentage of bbox
             score (str): calculated dart score
+            conf (float): confidence of calculated score
             img_tip(Tuple): Point2D of dart tip
 
         Returns:
@@ -63,7 +65,7 @@ class ResultVisualizer(BaseOperator):
         # draw score
         vis_img = cv2.putText(
             vis_img,
-            score,
+            f"{score}, {round(conf,1)}",
             (0, img_h),
             cv2.FONT_HERSHEY_SIMPLEX,
             fontScale=2,

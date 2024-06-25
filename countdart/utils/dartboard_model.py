@@ -93,7 +93,7 @@ class DartboardModel:
         y = self.outer_double_ring * np.cos(np.radians(degree))
         return (x, y)
 
-    def get_score(self, point_2d: np.array) -> Tuple[str, int]:
+    def get_score(self, point_2d: Tuple[float, float]) -> Tuple[str, int]:
         """Returns the score in a descriptional string and as integer,
         given a 2d point (x, y) in dartboard coordinate system.
         The descriptional string can contain:

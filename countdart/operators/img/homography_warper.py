@@ -8,7 +8,7 @@ import cv2
 import numpy as np
 
 from countdart.database.schemas import CalibrationPoint
-from countdart.database.schemas.config import IntConfigModel
+from countdart.database.schemas.config import BooleanConfigModel, IntConfigModel
 from countdart.operators.operator import OPERATORS, BaseOperator
 from countdart.utils.dartboard_model import DartboardModel
 
@@ -29,6 +29,13 @@ class HomographyWarper(BaseOperator):
         min_value=0,
     )
 
+    use_remap = BooleanConfigModel(
+        name="use_remap",
+        default_value=False,
+        description="Use remap instead of warpPerspective. "
+        "This will slow down startup time, but may speed up fps.",
+    )
+
     def __init__(
         self,
         calib_points: List[CalibrationPoint],
@@ -45,14 +52,16 @@ class HomographyWarper(BaseOperator):
         # This will initialize following variables:
         # self._h, self._h_inv, self._map_y, self._map_x
         # self._translate
-        self.update_warp_map()
+        self.update_warp()
 
     @property
     def size(self):
         """Return size of resulting image"""
         return (self._dartboard_model.outer_double_ring + self.margin.value) * 2
 
-    def _warp_point(self, matrix: np.ndarray, pt: Tuple[int, int]) -> Tuple[int, int]:
+    def _warp_point(
+        self, matrix: np.ndarray, pt: Tuple[float, float]
+    ) -> Tuple[float, float]:
         """Warp given point (x, y) with given homography matrix
 
         Args:
@@ -69,7 +78,7 @@ class HomographyWarper(BaseOperator):
         py = (matrix[1][0] * pt[0] + matrix[1][1] * pt[1] + matrix[1][2]) / (
             (matrix[2][0] * pt[0] + matrix[2][1] * pt[1] + matrix[2][2])
         )
-        return (int(px), int(py))
+        return (px, py)
 
     def _update_maps(self, img_shape: np.array, matrix: np.array) -> None:
         """Calculates and updates the warp maps 'self._map_x' and 'self._map_y'
@@ -89,23 +98,10 @@ class HomographyWarper(BaseOperator):
         for y in range(img_shape[0]):
             for x in range(img_shape[1]):
                 pt_warped = self._warp_point(matrix, (x, y))
-                self._map_x[y, x] = pt_warped[0]
-                self._map_y[y, x] = pt_warped[1]
+                self._map_x[y, x] = int(pt_warped[0])
+                self._map_y[y, x] = int(pt_warped[1])
 
-    def _update_conf_arr(self):
-        """confidence array.
-        The confidence array describes the precision of the resulting
-        warped image. This is done by checking if the point
-
-        Args:
-            img_shape (np.array): _description_
-        """
-        h, w = self._img_shape[0], self._img_shape[1]
-        unique_arr = np.arange(0, h * w).reshape(h, w)
-        # map
-        self._conf_arr = self._warp_with_remap(unique_arr)
-
-    def update_warp_map(self) -> None:
+    def update_warp(self) -> None:
         """Calculates warp homograpyh and a warp mapping,
         based on calibration points and image shape.
         The warp mapping also contains a translation (based on image size),
@@ -134,15 +130,14 @@ class HomographyWarper(BaseOperator):
         self._h, _ = cv2.findHomography(self._obj_points, self._img_points)
         # find inverse, because we want to map points from image plane to object plane
         self._h_inv = np.linalg.inv(self._h)
-        # translation matrix, because the world plane has negative points
-        # and the top should be 20-1
-        translate_warp = np.array(
-            [[1, 0, -self.size / 2], [0, 1, -self.size / 2], [0, 0, 1]]
-        )
-        warp_remap = np.matmul(self._h, translate_warp)
-        self._update_maps(self._img_shape, warp_remap)
-        # update confidence mask
-        self._conf_arr = self._update_conf_arr()
+        if self.use_remap.value:
+            # translation matrix, because the world plane has negative points
+            # and the top should be 20-1
+            translate_warp = np.array(
+                [[1, 0, -self.size / 2], [0, 1, -self.size / 2], [0, 0, 1]]
+            )
+            warp_remap = np.matmul(self._h, translate_warp)
+            self._update_maps(self._img_shape, warp_remap)
         # create homography for warping with cv2.warpPerspective
         translate_homography = np.array(
             [[1, 0, self.size / 2], [0, 1, self.size / 2], [0, 0, 1]]
@@ -158,6 +153,8 @@ class HomographyWarper(BaseOperator):
         Returns:
             np.array: warped image
         """
+        if self._map_x is None:
+            self.update_warp()
         warped_image = cv2.remap(image, self._map_x, self._map_y, cv2.INTER_NEAREST)
         # cut to output size
         cutted = warped_image[0 : self.size, 0 : self.size]
@@ -195,13 +192,16 @@ class HomographyWarper(BaseOperator):
         """
         if image.shape != self._img_shape:
             self._img_shape = image.shape
-            self.update_warp_map()
+            self.update_warp()
         # warp image
-        warped = self._warp_with_remap(image)
+        if self.use_remap.value:
+            warped = self._warp_with_remap(image)
+        else:
+            warped = self._warp_with_homography(image)
         # flip image because origin is on top left and not bottom left
         return cv2.flip(warped, 0)
 
-    def warp_point_to_model(self, x: float, y: float) -> Tuple[int, int]:
+    def warp_point_to_model(self, x: float, y: float) -> Tuple[float, float]:
         """Warps single point to dartboard model. Will not add translation.
 
         Args:

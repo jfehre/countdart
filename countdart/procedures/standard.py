@@ -20,6 +20,7 @@ from countdart.operators.darttip_calculator import DartTipCalculator
 from countdart.operators.img.bbox_detector import BBoxDetector
 from countdart.operators.img.hough_line_detector import HoughLineDetector
 from countdart.operators.img.result_visualizer import ResultVisualizer
+from countdart.operators.result_publisher import ResultPublisher
 from countdart.operators.score_calculator import ScoreCalculator
 from countdart.operators.size_classifier import SizeClassifier
 from countdart.procedures.base import PROCEDURES, BaseProcedure
@@ -107,6 +108,10 @@ class StandardProcedure(BaseProcedure):
         scorer = ScoreCalculator(dartboard_model, redis_key=f"cam_{cam_db.id}")
         visualizer = ResultVisualizer(redis_key=f"cam_{cam_db.id}")
         fps_calculator = FpsCalculator(redis_key=f"cam_{cam_db.id}")
+        publisher = ResultPublisher(redis_key=f"cam_{cam_db.id}")
+
+        # initialize last variables
+        prev_cls = "none"
 
         # endless loop. Needs to be canceled by celery
         while not self.is_aborted():
@@ -117,16 +122,28 @@ class StandardProcedure(BaseProcedure):
             motion_mask = motion(frame)
             bbox, size = bbox_detector(motion_mask)
             cls = classifier(size)
-            if cls == "dart":
+            if cls == "dart" and prev_cls == "dart":
+                # we wait 1 frame to avoid motion blur
                 line = line_detector(motion_mask, bbox)
                 img_tip = tip_calculator(frame, bbox, line)
                 if img_tip and warper:
                     dartboard_pt = warper.warp_point_to_model(img_tip[0], img_tip[1])
-                    score, _ = scorer(dartboard_pt)
-                    visualizer(frame, bbox, cls, line, score, img_tip)
+                    dartboard_pt_conf = warper.warp_point_to_model(
+                        img_tip[0] + 1, img_tip[1] + 1
+                    )
+                    score, conf = scorer(dartboard_pt, dartboard_pt_conf)
+                    visualizer(frame, bbox, cls, line, score, conf, img_tip)
                     # reset motion mask
                     motion(frame, learning_rate=1)
+                    publisher(
+                        cls, {"score": score, "conf": conf, "point": dartboard_pt}
+                    )
+            elif cls == "hand" and prev_cls != "hand":
+                # take out in progress
+                publisher(cls)
             fps_calculator()
+            # update previous variables
+            prev_cls = cls
 
         # task was aborted so shutdown gracefully
         cam.teardown()
