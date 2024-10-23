@@ -36,7 +36,15 @@ homepage = "https://github.com/jfehre"
 
 [project.optional-dependencies]
 test = ["pytest", "httpx"]
-dev = ["pre-commit", "black", "isort", "flake8", "interrogate", "pip-tools"]
+dev = [
+    "pre-commit",
+    "black",
+    "isort",
+    "flake8",
+    "interrogate",
+    "pip-tools",
+    "logfire",
+]
 plot = ["matplotlib"]
 
 

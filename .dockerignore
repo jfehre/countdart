@@ -1,0 +1,9 @@
+# ignore frontend
+frontend
+# ignore build data and caches
+build
+.pytest_cache
+countdart.egg-info
+test
+.git
+.idea

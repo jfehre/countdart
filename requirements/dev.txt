@@ -39,8 +39,12 @@ celery==5.3.6
     # via
     #   -c requirements/base.txt
     #   countdart (pyproject.toml)
+certifi==2024.8.30
+    # via requests
 cfgv==3.4.0
     # via pre-commit
+charset-normalizer==3.4.0
+    # via requests
 click==8.1.7
     # via
     #   -c requirements/base.txt
@@ -67,6 +71,11 @@ click-repl==0.3.0
     #   celery
 colorama==0.4.6
     # via interrogate
+deprecated==1.2.14
+    # via
+    #   opentelemetry-api
+    #   opentelemetry-exporter-otlp-proto-http
+    #   opentelemetry-semantic-conventions
 distlib==0.3.8
     # via virtualenv
 dnspython==2.6.1
@@ -81,6 +90,8 @@ exceptiongroup==1.2.0
     # via
     #   -c requirements/base.txt
     #   anyio
+executing==2.1.0
+    # via logfire
 fastapi==0.109.2
     # via
     #   -c requirements/base.txt
@@ -89,6 +100,8 @@ filelock==3.13.1
     # via virtualenv
 flake8==7.0.0
     # via countdart (pyproject.toml)
+googleapis-common-protos==1.65.0
+    # via opentelemetry-exporter-otlp-proto-http
 h11==0.14.0
     # via
     #   -c requirements/base.txt
@@ -99,8 +112,11 @@ idna==3.6
     # via
     #   -c requirements/base.txt
     #   anyio
+    #   requests
 importlib-metadata==7.0.1
-    # via build
+    # via
+    #   build
+    #   opentelemetry-api
 interrogate==1.5.0
     # via countdart (pyproject.toml)
 isort==5.13.2
@@ -109,8 +125,14 @@ kombu==5.3.5
     # via
     #   -c requirements/base.txt
     #   celery
+logfire==1.2.0
+    # via countdart (pyproject.toml)
+markdown-it-py==3.0.0
+    # via rich
 mccabe==0.7.0
     # via flake8
+mdurl==0.1.2
+    # via markdown-it-py
 mypy-extensions==1.0.0
     # via black
 nodeenv==1.8.0
@@ -124,6 +146,28 @@ opencv-contrib-python==4.9.0.80
     # via
     #   -c requirements/base.txt
     #   countdart (pyproject.toml)
+opentelemetry-api==1.27.0
+    # via
+    #   opentelemetry-exporter-otlp-proto-http
+    #   opentelemetry-instrumentation
+    #   opentelemetry-sdk
+    #   opentelemetry-semantic-conventions
+opentelemetry-exporter-otlp-proto-common==1.27.0
+    # via opentelemetry-exporter-otlp-proto-http
+opentelemetry-exporter-otlp-proto-http==1.27.0
+    # via logfire
+opentelemetry-instrumentation==0.48b0
+    # via logfire
+opentelemetry-proto==1.27.0
+    # via
+    #   opentelemetry-exporter-otlp-proto-common
+    #   opentelemetry-exporter-otlp-proto-http
+opentelemetry-sdk==1.27.0
+    # via
+    #   logfire
+    #   opentelemetry-exporter-otlp-proto-http
+opentelemetry-semantic-conventions==0.48b0
+    # via opentelemetry-sdk
 packaging==23.2
     # via
     #   black
@@ -146,6 +190,11 @@ prompt-toolkit==3.0.43
     # via
     #   -c requirements/base.txt
     #   click-repl
+protobuf==4.25.5
+    # via
+    #   googleapis-common-protos
+    #   logfire
+    #   opentelemetry-proto
 py==1.11.0
     # via interrogate
 pycodestyle==2.11.1
@@ -166,6 +215,8 @@ pydantic-settings==2.2.1
     #   countdart (pyproject.toml)
 pyflakes==3.2.0
     # via flake8
+pygments==2.18.0
+    # via rich
 pymongo==4.6.3
     # via
     #   -c requirements/base.txt
@@ -186,6 +237,10 @@ redis==5.0.1
     # via
     #   -c requirements/base.txt
     #   countdart (pyproject.toml)
+requests==2.32.3
+    # via opentelemetry-exporter-otlp-proto-http
+rich==13.9.3
+    # via logfire
 six==1.16.0
     # via
     #   -c requirements/base.txt
@@ -206,6 +261,7 @@ tomli==2.0.1
     # via
     #   black
     #   build
+    #   logfire
     #   pip-tools
     #   pyproject-hooks
 typer==0.9.0
@@ -220,8 +276,11 @@ typing-extensions==4.9.0
     #   black
     #   fastapi
     #   kombu
+    #   logfire
+    #   opentelemetry-sdk
     #   pydantic
     #   pydantic-core
+    #   rich
     #   starlette
     #   typer
     #   uvicorn
@@ -230,6 +289,8 @@ tzdata==2024.1
     #   -c requirements/base.txt
     #   backports-zoneinfo
     #   celery
+urllib3==2.2.3
+    # via requests
 uvicorn==0.27.0.post1
     # via
     #   -c requirements/base.txt
@@ -256,6 +317,10 @@ websockets==12.0
     #   countdart (pyproject.toml)
 wheel==0.42.0
     # via pip-tools
+wrapt==1.16.0
+    # via
+    #   deprecated
+    #   opentelemetry-instrumentation
 zipp==3.17.0
     # via importlib-metadata
 

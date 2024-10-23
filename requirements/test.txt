@@ -34,7 +34,7 @@ celery==5.3.6
     # via
     #   -c requirements/base.txt
     #   countdart (pyproject.toml)
-certifi==2024.2.2
+certifi==2024.8.30
     # via
     #   httpcore
     #   httpx
