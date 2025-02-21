@@ -29,6 +29,7 @@ from countdart.database.db import NameAlreadyTakenError, NotFoundError
 from countdart.database.schemas.config import AllConfigModel, DeleteConfigModel
 from countdart.operators import FrameGrabber, USBCam
 from countdart.procedures.base import PROCEDURES
+from countdart.settings import settings
 from countdart.utils.misc import decode_numpy, remove, update_config_list
 
 router = APIRouter(prefix="/cams", tags=["Camera"])
@@ -69,7 +70,7 @@ async def websocket_endpoint(cam_id: schemas.IdString, websocket: WebSocket):
             except asyncio.TimeoutError:
                 pass
             # Get current values from key
-            r = redis.Redis(host="redis", port=6379)
+            r = redis.Redis(host=settings.REDIS_HOST, port=settings.REDIS_PORT)
             encoded = r.get(f"cam_{cam_id}_{operator}")
             # check if value changed, otherwise no update needs to be send
             if encoded_array == encoded:
@@ -283,7 +284,7 @@ def get_image(
     Args:
         cam_id (schemas.IdString): id of the cam
     """
-    r = redis.Redis(host="redis", port=6379)
+    r = redis.Redis(host=settings.REDIS_HOST, port=settings.REDIS_PORT)
     encoded = r.get(f"cam_{cam_id}_img_raw")
     frame = decode_numpy(encoded)
     img = Image.fromarray(frame)
@@ -323,7 +324,7 @@ def get_cam_fps(
     Returns:
         float: fps
     """
-    r = redis.Redis(host="redis", port=6379)
+    r = redis.Redis(host=settings.REDIS_HOST, port=settings.REDIS_PORT)
     return r.get(f"cam_{cam_id}_FpsCalculator")
 
 
@@ -344,7 +345,7 @@ def set_config(cam_id: schemas.IdString, config: List[AllConfigModel]) -> schema
         patch = schemas.CamPatch(cam_config=updated_config)
         updated = crud.update_cam(cam_id, patch)
         # use redis to apply config to worker processes
-        r = redis.Redis(host="redis", port=6379)
+        r = redis.Redis(host=settings.REDIS_HOST, port=settings.REDIS_PORT)
         r.set(
             f"cam_{cam_id}_config",
             json.dumps({updated.type: [c.model_dump() for c in patch.cam_config]}),
@@ -396,7 +397,7 @@ def delete_config(cam_id: schemas.IdString, name: Optional[str] = None) -> schem
         patch = schemas.CamPatch(cam_config=updated_config)
         updated = crud.update_cam(cam_id, patch)
         # use redis to apply config to worker processes
-        r = redis.Redis(host="redis", port=6379)
+        r = redis.Redis(host=settings.REDIS_HOST, port=settings.REDIS_PORT)
         r.set(
             f"cam_{cam_id}_config",
             json.dumps({updated.type: [c.model_dump() for c in deletions]}),

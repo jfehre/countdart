@@ -6,8 +6,7 @@
   "configurations": [
     {
       "name": "Debug Backend",
-      "type": "python",
-      "python": "/opt/venvs/countdart/bin/python",
+      "type": "debugpy",
       "request": "launch",
       "module": "uvicorn",
       "args": [
@@ -23,6 +22,34 @@
       ],
       "console": "integratedTerminal",
       "justMyCode": true
+    },
+    {
+      "type": "chrome",
+      "request": "launch",
+      "name": "Launch Frontend",
+      "url": "http://localhost:3000",
+      "webRoot": "${workspaceFolder}/frontend",
+      "preLaunchTask": "npm: start",
+      "env": {
+        "BROWSER": "none"
+      }
+    },
+    {
+      "name": "Celery",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "celery",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "args": [
+        "-A",
+        "countdart.celery_app.celery_app",
+        "worker",
+        "-l",
+        "info",
+        "-P",
+        "solo"
+      ]
     }
   ]
 }

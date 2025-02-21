@@ -8,6 +8,7 @@ import redis
 from pydantic import TypeAdapter
 
 from countdart.database.schemas.config import AllConfigModel, ConfigBaseModel
+from countdart.settings import settings
 from countdart.utils.misc import encode_numpy
 from countdart.utils.registry import Registry
 
@@ -27,7 +28,7 @@ class BaseOperator(ABC):
 
     def __init__(self, redis_key: str = None, config: List[AllConfigModel] = None):
         if redis_key:
-            self._r = redis.Redis(host="redis", port=6379)
+            self._r = redis.Redis(host=settings.REDIS_HOST, port=settings.REDIS_PORT)
             self._r_key = redis_key
         else:
             self._r = None

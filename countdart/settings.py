@@ -2,8 +2,15 @@
 to determine the values of any fields by reading from the environment.
 Default values will be used if no matching environment variable is set
 """
+import os
+
+from dotenv import load_dotenv
 from pydantic import MongoDsn
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Explicitly provide path to .env file, so also celery module will find it
+dotenv_path = os.path.join(os.path.dirname(__file__), "..", ".env")
+load_dotenv(dotenv_path)
 
 
 class Settings(BaseSettings):
@@ -26,6 +33,10 @@ class Settings(BaseSettings):
     # Celery settings
     CELERY_BROKER: str = "redis://redis:6379/0"
     CELERY_BACKEND: str = "redis://redis:6379/1"
+
+    # Redis settings
+    REDIS_HOST: str = "redis"
+    REDIS_PORT: int = 6379
 
 
 settings = Settings()
