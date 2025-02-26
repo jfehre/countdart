@@ -11,18 +11,18 @@ from countdart.celery_app import celery_app
 from countdart.database import schemas
 from countdart.database.schemas.config import AllConfigModel
 from countdart.operators import (
-    ChangeDetector,
+    BBoxDetector,
+    CustomChangeDetector,
+    DartTipCalculator,
     FpsCalculator,
     FrameGrabber,
     HomographyWarper,
+    HoughLineDetector,
+    ResultPublisher,
+    ResultVisualizer,
+    ScoreCalculator,
+    SizeClassifier,
 )
-from countdart.operators.darttip_calculator import DartTipCalculator
-from countdart.operators.img.bbox_detector import BBoxDetector
-from countdart.operators.img.hough_line_detector import HoughLineDetector
-from countdart.operators.img.result_visualizer import ResultVisualizer
-from countdart.operators.result_publisher import ResultPublisher
-from countdart.operators.score_calculator import ScoreCalculator
-from countdart.operators.size_classifier import SizeClassifier
 from countdart.procedures.base import PROCEDURES, BaseProcedure
 from countdart.utils.dartboard_model import DartboardModel
 
@@ -59,7 +59,7 @@ class StandardProcedure(BaseProcedure):
         """
         return [
             HomographyWarper,
-            ChangeDetector,
+            CustomChangeDetector,
             BBoxDetector,
             SizeClassifier,
             HoughLineDetector,
@@ -97,9 +97,9 @@ class StandardProcedure(BaseProcedure):
                 config=op_configs["HomographyWarper"],
                 redis_key=f"cam_{cam_db.id}",
             )
-        motion = ChangeDetector(
+        motion = CustomChangeDetector(
             redis_key=f"cam_{cam_db.id}",
-            config=op_configs["ChangeDetector"],
+            config=op_configs["CustomChangeDetector"],
         )
         bbox_detector = BBoxDetector()
         classifier = SizeClassifier()
@@ -110,7 +110,7 @@ class StandardProcedure(BaseProcedure):
         fps_calculator = FpsCalculator(redis_key=f"cam_{cam_db.id}")
         publisher = ResultPublisher(redis_key=f"cam_{cam_db.id}")
 
-        # initialize last variables
+        # initialize last classification
         prev_cls = "none"
 
         # endless loop. Needs to be canceled by celery
@@ -122,7 +122,8 @@ class StandardProcedure(BaseProcedure):
             motion_mask = motion(frame)
             bbox, size = bbox_detector(motion_mask)
             cls = classifier(size)
-            if cls == "dart" and prev_cls == "dart":
+            # we wait 1 frame to avoid motion blur
+            if cls == "dart" and prev_cls != "dart":
                 # we wait 1 frame to avoid motion blur
                 line = line_detector(motion_mask, bbox)
                 img_tip = tip_calculator(frame, bbox, line)
@@ -134,13 +135,14 @@ class StandardProcedure(BaseProcedure):
                     score, conf = scorer(dartboard_pt, dartboard_pt_conf)
                     visualizer(frame, bbox, cls, line, score, conf, img_tip)
                     # reset motion mask
-                    motion(frame, learning_rate=1)
+                    motion.reset(frame)
                     publisher(
                         cls, {"score": score, "conf": conf, "point": dartboard_pt}
                     )
             elif cls == "hand" and prev_cls != "hand":
                 # take out in progress
                 publisher(cls)
+                motion.reset(frame)
             fps_calculator()
             # update previous variables
             prev_cls = cls

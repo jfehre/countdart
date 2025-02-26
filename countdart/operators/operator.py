@@ -3,6 +3,7 @@ import json
 from abc import ABC, abstractmethod
 from typing import Any, List
 
+import logfire
 import numpy as np
 import redis
 from pydantic import TypeAdapter
@@ -92,9 +93,10 @@ class BaseOperator(ABC):
                 self._r.set(f"{self._r_key}_config", json.dumps(all_conf))
 
     def __call__(self, *args, **kwargs):
-        self.receive_config_from_redis()
-        result = self.call(*args, **kwargs)
-        self.send_result_to_redis(result)
+        with logfire.span(f"Operator {self.__class__.__name__}"):
+            self.receive_config_from_redis()
+            result = self.call(*args, **kwargs)
+            self.send_result_to_redis(result)
         return result
 
     def teardown(self):

@@ -17,6 +17,7 @@ from countdart.database.crud import dartboard as crud
 from countdart.database.db import NameAlreadyTakenError, NotFoundError
 from countdart.procedures.base import PROCEDURES
 from countdart.procedures.collector import MainCollector
+from countdart.settings import settings
 from countdart.utils.misc import update_config_dict
 
 router = APIRouter(prefix="/dartboards", tags=["Dartboard"])
@@ -83,7 +84,7 @@ def update_dartboard(
             dartboard.op_configs = updated_configs
         updated = crud.update_dartboard(dartboard_id, dartboard)
         # use redis to apply config to all worker processes
-        r = redis.Redis(host="redis", port=6379)
+        r = redis.Redis(host=settings.REDIS_HOST, port=settings.REDIS_PORT)
         cams = cam_crud.get_cams(id_list=dartboard.cams)
         # communicate with each procedure in each cam
         for cam in cams:

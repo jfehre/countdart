@@ -175,13 +175,15 @@ export function WebSocketStream({
                 </ActionIcon>
                 <ActionIcon
                     variant={
-                        activeView === "ChangeDetector" ? "filled" : "outline"
+                        activeView === "CustomChangeDetector"
+                            ? "filled"
+                            : "outline"
                     }
                     size="md"
                     aria-label="Motion"
                     onClick={() => {
-                        changeImageView("ChangeDetector");
-                        setActiveView("ChangeDetector");
+                        changeImageView("CustomChangeDetector");
+                        setActiveView("CustomChangeDetector");
                     }}
                 >
                     <Tooltip label="Activity View" position="bottom">

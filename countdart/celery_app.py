@@ -13,6 +13,7 @@ and use command `celery -A countdart.celery_app.celery_app flower`
 to start a task manager
 """
 
+import logfire
 from celery import Celery
 
 from countdart.settings import settings
@@ -27,6 +28,8 @@ def make_celery(app_name: str) -> Celery:
     Returns:
         a celery app object
     """
+    # logfire.configure()
+    logfire.info("Creating celery app")
     celery_app = Celery(
         app_name,
         broker=settings.CELERY_BROKER,
