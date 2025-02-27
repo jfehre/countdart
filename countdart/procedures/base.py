@@ -53,7 +53,7 @@ class BaseProcedure(AbortableTask, ABC):
         """
         config_dict = {}
         for operator in self.operators:
-            config_dict[operator.__name__] = operator.get_config()
+            config_dict[operator.__name__] = operator.get_config(operator)
         return config_dict
 
     def __call__(self, *args, **kwargs):

@@ -105,19 +105,18 @@ class BaseOperator(ABC):
         if self._r is not None:
             self._r.close()
 
-    @classmethod
-    def get_config(cls) -> List[AllConfigModel]:
+    def get_config(self) -> List[AllConfigModel]:
         """Return all attributes of operator which are of
         type or subtype of AllConfigModel. These attributes
         can be set by user"""
         configs = []
         attributes = [
             a
-            for a in dir(cls)
-            if not a.startswith("_") and not callable(getattr(cls, a))
+            for a in dir(self)
+            if not a.startswith("_") and not callable(getattr(self, a))
         ]
         for attr in attributes:
-            attr = getattr(cls, attr)
+            attr = getattr(self, attr)
             if isinstance(attr, ConfigBaseModel):
                 configs.append(attr)
         return configs

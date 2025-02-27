@@ -11,6 +11,7 @@ from celery.utils.log import get_task_logger
 
 from countdart.celery_app import celery_app
 from countdart.database import schemas
+from countdart.settings import settings
 
 logger = get_task_logger(__name__)
 
@@ -78,7 +79,7 @@ class MainCollector(AbortableTask):
         # initialize vars
         dartboard_db = schemas.Dartboard(**dartboard_db)
 
-        r = redis.Redis(host="redis", port=6379)
+        r = redis.Redis(host=settings.REDIS_HOST, port=settings.REDIS_PORT)
 
         # create result key
         all_results = dict.fromkeys(dartboard_db.cams, None)

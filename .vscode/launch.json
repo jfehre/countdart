@@ -47,8 +47,8 @@
         "worker",
         "-l",
         "info",
-        "-P",
-        "solo"
+        "--concurrency",
+        "8"
       ]
     }
   ]

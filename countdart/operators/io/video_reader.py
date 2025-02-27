@@ -21,20 +21,31 @@ class VideoReader(FrameGrabber):
     loop = BooleanConfigModel(
         name="loop",
         default_value=False,
-        description="Loop video",
+        description="Loop video, if the input source is a recorded video."
+        "It has no effect on streams.",
     )
 
     fps = IntConfigModel(
         name="fps",
-        default_value=15,
+        default_value=30,
         description="Limit fps to given value",
         min_value=0,
         max_value=30,
     )
 
+    skip_frames = BooleanConfigModel(
+        name="skip_frames",
+        default_value=False,
+        description="If you experiance latency or lag,"
+        "enable this option to skip frames."
+        "This will reduce the latency by skipping frames,"
+        "but the fps will also drop.",
+    )
+
     def __init__(self, source: str, **kwargs):
         self._source: str = source
         self._capture = cv2.VideoCapture(self._source)
+        self._capture.set(cv2.CAP_PROP_BUFFERSIZE, 0)
         self._last_frame_time = time.time()
         if not self._capture.isOpened():
             raise FileNotFoundError(f"Could not open {self._source}.")
@@ -66,18 +77,30 @@ class VideoReader(FrameGrabber):
             now = time.time()
         self._last_frame_time = now
         # get frame
-        ret, frame = self._capture.read()
-        if not ret:
-            # Check if video is over
-            if self._capture.get(cv2.CAP_PROP_POS_FRAMES) == self._capture.get(
-                cv2.CAP_PROP_FRAME_COUNT
-            ):
-                if self.loop.value:
-                    self._capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
-                    ret, frame = self._capture.read()
+        while True:
+            ret, frame = self._capture.read()
+            if not ret:
+                # Check if video is over
+                if self._capture.get(cv2.CAP_PROP_POS_FRAMES) == self._capture.get(
+                    cv2.CAP_PROP_FRAME_COUNT
+                ):
+                    if self.loop.value:
+                        self._capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                        ret, frame = self._capture.read()
+                    else:
+                        raise StopIteration("No more frames.")
                 else:
-                    raise StopIteration("No more frames.")
-            else:
-                logging.warning("Failed to capture frame")
+                    logging.warning("Failed to capture frame")
+                    continue
+            break
+
+        if self.skip_frames.value:
+            while True:
+                ret, next_frame = self._capture.read()
+                if not ret:
+                    break
+                frame = next_frame
+                if time.time() - now > 2 / self.fps.value:  # Timeout after half fps
+                    break
 
         return np.array(frame)

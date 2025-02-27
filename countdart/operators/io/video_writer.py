@@ -16,7 +16,7 @@ class VideoWriter(BaseOperator):
 
     fps = IntConfigModel(
         name="fps",
-        default_value=15,
+        default_value=30,
         description="Limit fps to given value",
         min_value=0,
         max_value=30,

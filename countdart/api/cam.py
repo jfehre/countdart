@@ -325,7 +325,8 @@ def get_cam_fps(
         float: fps
     """
     r = redis.Redis(host=settings.REDIS_HOST, port=settings.REDIS_PORT)
-    return r.get(f"cam_{cam_id}_FpsCalculator")
+    fps = r.get(f"cam_{cam_id}_FpsCalculator")
+    return fps if fps else 0
 
 
 @router.patch("/{cam_id}/config")
