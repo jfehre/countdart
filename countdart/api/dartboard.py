@@ -82,7 +82,7 @@ def update_dartboard(
             old_configs = crud.get_dartboard(dartboard_id).op_configs
             updated_configs = update_config_dict(old_configs, dartboard.op_configs)
             dartboard.op_configs = updated_configs
-        updated = crud.update_dartboard(dartboard_id, dartboard)
+        dartboard = crud.update_dartboard(dartboard_id, dartboard)
         # use redis to apply config to all worker processes
         r = redis.Redis(host=settings.REDIS_HOST, port=settings.REDIS_PORT)
         cams = cam_crud.get_cams(id_list=dartboard.cams)
@@ -90,11 +90,11 @@ def update_dartboard(
         for cam in cams:
             r.set(
                 f"cam_{cam.id}_config",
-                json.dumps(updated.model_dump()["op_configs"]),
+                json.dumps(dartboard.model_dump()["op_configs"]),
             )
     except NotFoundError as e:
         raise HTTPException(404) from e
-    return updated
+    return dartboard
 
 
 @router.delete("/{dartboard_id}", response_model_by_alias=False)

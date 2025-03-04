@@ -12,12 +12,13 @@ from countdart.database import schemas
 from countdart.database.schemas.config import AllConfigModel
 from countdart.operators import (
     BBoxDetector,
-    CustomChangeDetector,
+    DartSegmentor,
     DartTipCalculator,
     FpsCalculator,
     FrameGrabber,
     HomographyWarper,
     HoughLineDetector,
+    MotionDetector,
     ResultPublisher,
     ResultVisualizer,
     ScoreCalculator,
@@ -59,7 +60,8 @@ class StandardProcedure(BaseProcedure):
         """
         return [
             HomographyWarper,
-            CustomChangeDetector,
+            DartSegmentor,
+            MotionDetector,
             BBoxDetector,
             SizeClassifier,
             HoughLineDetector,
@@ -97,13 +99,21 @@ class StandardProcedure(BaseProcedure):
                 config=op_configs["HomographyWarper"],
                 redis_key=f"cam_{cam_db.id}",
             )
-        motion = CustomChangeDetector(
+        segmentor = DartSegmentor(
             redis_key=f"cam_{cam_db.id}",
-            config=op_configs["CustomChangeDetector"],
+            config=op_configs["DartSegmentor"],
+        )
+        motion = MotionDetector(
+            redis_key=f"cam_{cam_db.id}",
+            config=op_configs["MotionDetector"],
         )
         bbox_detector = BBoxDetector()
-        classifier = SizeClassifier()
-        line_detector = HoughLineDetector()
+        classifier = SizeClassifier(
+            config=op_configs["SizeClassifier"], redis_key=f"cam_{cam_db.id}"
+        )
+        line_detector = HoughLineDetector(
+            config=op_configs["HoughLineDetector"], redis_key=f"cam_{cam_db.id}"
+        )
         tip_calculator = DartTipCalculator()
         scorer = ScoreCalculator(dartboard_model, redis_key=f"cam_{cam_db.id}")
         visualizer = ResultVisualizer(redis_key=f"cam_{cam_db.id}")
@@ -113,6 +123,9 @@ class StandardProcedure(BaseProcedure):
         # initialize last classification
         prev_cls = "none"
 
+        segmentor_last_update = time.time()
+        segmentor_cycle = 0.5  # second
+
         # endless loop. Needs to be canceled by celery
         while not self.is_aborted():
             frame = cam()
@@ -120,32 +133,42 @@ class StandardProcedure(BaseProcedure):
             if warper:
                 warper(frame)
             motion_mask = motion(frame)
-            bbox, size = bbox_detector(motion_mask)
+            _, size = bbox_detector(motion_mask)
             cls = classifier(size)
-            # we wait 1 frame to avoid motion blur
-            if cls == "dart" and prev_cls != "dart":
-                # we wait 1 frame to avoid motion blur
-                line = line_detector(motion_mask, bbox)
-                img_tip = tip_calculator(frame, bbox, line)
+            if cls == "dart":
+                segmented_image = segmentor(frame)
+                bbox_full, _ = bbox_detector(segmented_image)
+                line = line_detector(segmented_image, bbox_full)
+                img_tip = tip_calculator(frame, bbox_full, line)
                 if img_tip and warper:
                     dartboard_pt = warper.warp_point_to_model(img_tip[0], img_tip[1])
                     dartboard_pt_conf = warper.warp_point_to_model(
                         img_tip[0] + 1, img_tip[1] + 1
                     )
                     score, conf = scorer(dartboard_pt, dartboard_pt_conf)
-                    visualizer(frame, bbox, cls, line, score, conf, img_tip)
-                    # reset motion mask
-                    motion.reset(frame)
+                    visualizer(frame, bbox_full, cls, line, score, conf, img_tip)
                     publisher(
                         cls, {"score": score, "conf": conf, "point": dartboard_pt}
                     )
-            elif cls == "hand" and prev_cls != "hand":
+                # reset segmentor
+                motion.reset(frame)
+                segmentor.reset(frame)
+            elif cls == "hand":
                 # take out in progress
                 publisher(cls)
                 motion.reset(frame)
+                segmentor.reset(frame)
+            # reset detectors
+            if prev_cls != "none":
+                motion.reset(frame)
+                segmentor.reset(frame)
             fps_calculator()
             # update previous variables
             prev_cls = cls
+            # update segmentor every 0.5 seconds to avoid lighting changes
+            if time.time() - segmentor_last_update > segmentor_cycle:
+                segmentor_last_update = time.time()
+                segmentor.reset(frame)
 
         # task was aborted so shutdown gracefully
         cam.teardown()

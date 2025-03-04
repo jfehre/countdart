@@ -1,4 +1,4 @@
-"""Change Detector Operator"""
+"""Dart Segmentor Operator"""
 
 import cv2
 import logfire
@@ -7,13 +7,13 @@ import numpy as np
 from countdart.database.schemas.config import FloatConfigModel, IntConfigModel
 from countdart.operators.operator import OPERATORS, BaseOperator
 
-__all__ = "CustomChangeDetector"
+__all__ = "DartSegmentor"
 
 
 @OPERATORS.register_class
-class CustomChangeDetector(BaseOperator):
-    """Custom Change Detector Operator.
-    Will be used to detect changes in the images
+class DartSegmentor(BaseOperator):
+    """Dart Segmentor Operator.
+    Will be used to segment darts in the images from motion.
     This operator will also resize the image if the resize parameter
     is less than 1.
     """
@@ -44,7 +44,6 @@ class CustomChangeDetector(BaseOperator):
 
     def __init__(self, **kwargs):
         self._last_image = None
-        self.k = 0.05
         super().__init__(**kwargs)
 
     def call(self, image: np.array, **kwargs) -> np.array:
@@ -76,7 +75,6 @@ class CustomChangeDetector(BaseOperator):
                     component_mask = labels == label
                     if np.any(component_mask & high_mask):
                         thresh[component_mask | low_mask] = 255
-            # Calculate last image with exponential smoothing
             with logfire.span("copy image"):
                 self._last_image = image
             return np.array(thresh, dtype=np.uint8)

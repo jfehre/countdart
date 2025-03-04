@@ -1,4 +1,7 @@
 """ This module contains a size classifier """
+
+from collections import deque
+
 from countdart.database.schemas.config import FloatConfigModel
 from countdart.operators.operator import OPERATORS, BaseOperator
 
@@ -49,6 +52,12 @@ class SizeClassifier(BaseOperator):
         max_value=1,
     )
 
+    def __init__(self, **kwargs):
+        self.classification_buffer = deque(
+            maxlen=15
+        )  # Buffer to store the last 15 classifications
+        super().__init__(**kwargs)
+
     def call(self, size: float) -> str:
         """Check if a class for given size exists.
         Returns the label of the class or "none" if no class
@@ -61,9 +70,17 @@ class SizeClassifier(BaseOperator):
             str: label of the found classification. "none" if no
             class was found
         """
+
         if self.hand_min.value <= size <= self.hand_max.value:
-            return "hand"
-        elif self.dart_min.value <= size <= self.dart_max.value:
-            return "dart"
+            classification = "hand"
+        elif self.dart_min.value <= size <= self.dart_max.value and all(
+            c != "hand" for c in self.classification_buffer
+        ):
+            classification = "dart"
         else:
-            return "none"
+            classification = "none"
+
+        # Update the classification buffer
+        self.classification_buffer.append(classification)
+
+        return classification

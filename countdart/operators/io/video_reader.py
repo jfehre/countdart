@@ -100,7 +100,7 @@ class VideoReader(FrameGrabber):
                 if not ret:
                     break
                 frame = next_frame
-                if time.time() - now > 2 / self.fps.value:  # Timeout after half fps
+                if time.time() - now > 1 / self.fps.value:  # Timeout after half fps
                     break
 
         return np.array(frame)
