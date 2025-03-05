@@ -36,10 +36,21 @@ class VideoReader(FrameGrabber):
     skip_frames = BooleanConfigModel(
         name="skip_frames",
         default_value=False,
-        description="If you experiance latency or lag,"
+        description="If you experiance latency or lag while streaming,"
         "enable this option to skip frames."
         "This will reduce the latency by skipping frames,"
         "but the fps will also drop.",
+    )
+
+    sync_time = BooleanConfigModel(
+        name="sync_time",
+        default_value=False,
+        description="If your input source is a video file,"
+        "enable this option to sync the video time with the system time."
+        "This will always capture the next correct frame by calculating "
+        "elapsed time between frames and setting the video position to the target time."
+        "This reduces the fps drastically because seeking the video "
+        "position is time consuming.",
     )
 
     def __init__(self, source: str, **kwargs):
@@ -47,6 +58,7 @@ class VideoReader(FrameGrabber):
         self._capture = cv2.VideoCapture(self._source)
         self._capture.set(cv2.CAP_PROP_BUFFERSIZE, 0)
         self._last_frame_time = time.time()
+        self._target_time = 0
         if not self._capture.isOpened():
             raise FileNotFoundError(f"Could not open {self._source}.")
         super().__init__(**kwargs)
@@ -62,6 +74,7 @@ class VideoReader(FrameGrabber):
         """Start camera. Does nothing because
         video is loaded on initialization
         """
+        self._target_time = 0
         pass
 
     def stop(self):
@@ -75,7 +88,18 @@ class VideoReader(FrameGrabber):
         # wait till limit reached
         while (now - self._last_frame_time) < (1 / self.fps.value):
             now = time.time()
+
+        if self.sync_time.value:
+            # Calculate the target time for the next frame
+            elapsed_time = (
+                now - self._last_frame_time
+            ) * 1000  # Convert to milliseconds
+            self._target_time = self._target_time + elapsed_time
+            # Set the video position to the target time
+            self._capture.set(cv2.CAP_PROP_POS_MSEC, self._target_time)
+
         self._last_frame_time = now
+
         # get frame
         while True:
             ret, frame = self._capture.read()
@@ -86,6 +110,7 @@ class VideoReader(FrameGrabber):
                 ):
                     if self.loop.value:
                         self._capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                        self._target_time = 0
                         ret, frame = self._capture.read()
                     else:
                         raise StopIteration("No more frames.")
@@ -100,7 +125,7 @@ class VideoReader(FrameGrabber):
                 if not ret:
                     break
                 frame = next_frame
-                if time.time() - now > 1 / self.fps.value:  # Timeout after half fps
+                if time.time() - now > 1 / self.fps.value:  # Timeout
                     break
 
         return np.array(frame)

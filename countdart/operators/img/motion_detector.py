@@ -32,7 +32,7 @@ class MotionDetector(BaseOperator):
 
     threshold = IntConfigModel(
         name="threshold",
-        default_value=100,
+        default_value=50,
         description="Threshold for the motion detection. "
         "Lower thresholds may pick up more background noise.",
         max_value=255,

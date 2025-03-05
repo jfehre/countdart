@@ -22,7 +22,7 @@ class SizeClassifier(BaseOperator):
 
     dart_min = FloatConfigModel(
         name="dart_min",
-        default_value=0.005,
+        default_value=0.003,
         description="minimum of hand classifier",
         min_value=0,
         max_value=1,
@@ -30,7 +30,7 @@ class SizeClassifier(BaseOperator):
 
     dart_max = FloatConfigModel(
         name="dart_max",
-        default_value=0.1,
+        default_value=0.05,
         description="maximum of hand classifier",
         min_value=0,
         max_value=1,
@@ -38,7 +38,7 @@ class SizeClassifier(BaseOperator):
 
     hand_min = FloatConfigModel(
         name="hand_min",
-        default_value=0.3,
+        default_value=0.09,
         description="minimum of hand classifier",
         min_value=0,
         max_value=1,

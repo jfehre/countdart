@@ -52,7 +52,7 @@ class HoughLineDetector(BaseOperator):
 
     max_line_gap = FloatConfigModel(
         name="max_line_gap",
-        default_value=70,
+        default_value=500,
         description="Maximum allowed gap between points"
         "on the same line to link them",
         max_value=500,

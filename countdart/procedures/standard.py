@@ -120,11 +120,8 @@ class StandardProcedure(BaseProcedure):
         fps_calculator = FpsCalculator(redis_key=f"cam_{cam_db.id}")
         publisher = ResultPublisher(redis_key=f"cam_{cam_db.id}")
 
-        # initialize last classification
-        prev_cls = "none"
-
         segmentor_last_update = time.time()
-        segmentor_cycle = 0.5  # second
+        segmentor_delay = 2  # second
 
         # endless loop. Needs to be canceled by celery
         while not self.is_aborted():
@@ -158,16 +155,11 @@ class StandardProcedure(BaseProcedure):
                 publisher(cls)
                 motion.reset(frame)
                 segmentor.reset(frame)
-            # reset detectors
-            if prev_cls != "none":
-                motion.reset(frame)
-                segmentor.reset(frame)
-            fps_calculator()
-            # update previous variables
-            prev_cls = cls
-            # update segmentor every 0.5 seconds to avoid lighting changes
-            if time.time() - segmentor_last_update > segmentor_cycle:
                 segmentor_last_update = time.time()
+            fps_calculator()
+            # update segmentor
+            if time.time() - segmentor_last_update < segmentor_delay:
+                motion.reset(frame)
                 segmentor.reset(frame)
 
         # task was aborted so shutdown gracefully
