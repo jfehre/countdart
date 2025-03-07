@@ -14,6 +14,8 @@ class ResultPublisher(BaseOperator):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        if self._r:
+            self._r.delete(f"{self._r_key}_{self.__class__.__name__}")
 
     def send_result_to_redis(self, data: Any):
         """Overwrite send to redis, because we want a list
@@ -28,8 +30,8 @@ class ResultPublisher(BaseOperator):
         if self._r:
             data = json.dumps(data)
             redis_result_key = f"{self._r_key}_{self.__class__.__name__}"
-            # self._r.set(redis_result_key, data)
-            self._r.lpush(redis_result_key, data)
+            self._r.set(redis_result_key, data)
+            # self._r.lpush(redis_result_key, data)
 
     def call(self, detection: str, data: Dict = None, **kwargs):
         """Call when new result was received"""

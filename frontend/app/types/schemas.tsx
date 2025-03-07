@@ -55,6 +55,14 @@ export interface CamHardwareSchema {
     source: number;
 }
 
+export interface CamDetectionResultSchema {
+    score: string;
+    conf: number;
+    point: [number, number];
+}
+
+export type CamDetectionSchema = [string, CamDetectionResultSchema | undefined];
+
 export interface NumberConfigSchema {
     name: string;
     description: string | undefined;

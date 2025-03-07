@@ -10,6 +10,7 @@ import {
     type DartboardSchema,
 } from "@/app/types/schemas";
 import { DartboardSettings } from "@/app/components/dartboard/dartboard-settings";
+import { DartboardOverview } from "@/app/components/dartboard/dartboard-overview";
 
 export default function Page({
     params,
@@ -26,7 +27,7 @@ export default function Page({
             .catch((error) => {
                 notifications.show({
                     title: "Connection error",
-                    message: "Could not retrieve Boards " + error,
+                    message: "Could not retrieve Board " + error,
                     color: "red",
                 });
             });
@@ -55,7 +56,12 @@ export default function Page({
                     <Tabs.Tab value="settings">Settings</Tabs.Tab>
                 </Tabs.List>
 
-                <Tabs.Panel value="overview">No overview content</Tabs.Panel>
+                <Tabs.Panel value="overview">
+                    <DartboardOverview
+                        dartboard={dartboard}
+                        setDartboard={setDartboard}
+                    ></DartboardOverview>
+                </Tabs.Panel>
                 <Tabs.Panel value="cameras">
                     <CameraOverview
                         dartboard={dartboard}

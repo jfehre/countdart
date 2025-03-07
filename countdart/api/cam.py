@@ -51,12 +51,14 @@ async def websocket_endpoint(cam_id: schemas.IdString, websocket: WebSocket):
     """
     await websocket.accept()
     encoded_array = None
+    old_result = None
     # Get cam model
     try:
         cam_db = crud.get_cam(cam_id)
     except NotFoundError as e:
         raise HTTPException(404) from e
     operator = cam_db.type
+    r = redis.Redis(host=settings.REDIS_HOST, port=settings.REDIS_PORT)
     try:
         while True:
             # Add this try block to yield back control to fastapi and allow
@@ -69,8 +71,14 @@ async def websocket_endpoint(cam_id: schemas.IdString, websocket: WebSocket):
                 operator = await asyncio.wait_for(websocket.receive_text(), 0.001)
             except asyncio.TimeoutError:
                 pass
-            # Get current values from key
-            r = redis.Redis(host=settings.REDIS_HOST, port=settings.REDIS_PORT)
+
+            # Get result from redis
+            result = r.get(f"cam_{cam_id}_ResultPublisher")
+            if result and result != "" and result != old_result:
+                old_result = result
+                await websocket.send_text(json.dumps(json.loads(result)))
+
+            # Get Frame from redis
             encoded = r.get(f"cam_{cam_id}_{operator}")
             # check if value changed, otherwise no update needs to be send
             if encoded_array == encoded:

@@ -2,8 +2,9 @@
 
 
 import json
+import time
 from time import sleep
-from typing import Dict, List, Tuple
+from typing import List, Tuple
 
 import redis
 from celery.contrib.abortable import AbortableTask
@@ -55,25 +56,6 @@ class MainCollector(AbortableTask):
                 value = x
         return value, max_count
 
-    @staticmethod
-    def get_max(items: Dict[str, Dict], compare_key: str) -> Tuple[str, float]:
-        """returns key if dict with maximum value in in the compare key
-
-        Args:
-            items (Dict[str, Dict]): Dict of dicts
-            compare_key (str): key to compare in the nested dict
-
-        Returns:
-            Tuple[str, float]: key and value of the maximum number
-        """
-        max_num = -1
-        key = ""
-        for k, value in items.items():
-            if value[1][compare_key] > max_num:
-                max_num = value[1][compare_key]
-                key = k
-        return key, max_num
-
     def run(self, dartboard_db: schemas.Dartboard):
         """start image processing to detect darts."""
         # initialize vars
@@ -89,37 +71,55 @@ class MainCollector(AbortableTask):
             key = f"cam_{cam_id}_ResultPublisher"
             r.delete(key)
 
+        receive_time = 0
+        timout_sec = 1
+        prev_cls = "none"
+
         # endless loop. Needs to be canceled by celery
         while not self.is_aborted():
             # check for result
             for cam_id in dartboard_db.cams:
                 key = f"cam_{cam_id}_ResultPublisher"
-                # result = r.get(key)
-                result = r.rpop(key)
-                if result is not None:
+                result = r.get(key)
+                if result and result != "":
                     all_results[cam_id] = json.loads(result)
-            # check if all results are collected
-            if None not in all_results.values():
-                # check if all classes are same
-                cls = [x[0] for x in all_results.values()]
-                if self.all_same(cls):
-                    if cls[0] == "hand":
-                        print("HAND")
-                    elif cls[0] == "dart":
-                        scores = [x[1]["score"] for x in all_results.values()]
-                        best_conf_key, _ = self.get_max(all_results, "conf")
-                        # check if there is a majority score
-                        max_score, count = self.majority(scores)
-                        if count > len(scores) / 2:
-                            print(f"DART {max_score}")
-                        else:
-                            # get max conf score
-                            print(f"DART {all_results[best_conf_key][1]['score']}")
-                else:
-                    print("some cameras show different results")
+                    receive_time = time.time()
+
+            # conditions for result publishing
+            completed = None not in all_results.values()
+            timout = receive_time != 0 and time.time() - receive_time > timout_sec
+
+            if completed or timout:
+                # get majority class
+                cls, _ = self.majority([x[0] for x in all_results.values() if x])
+                if cls == "hand" and prev_cls != "hand":
+                    print("HAND")
+                elif cls == "dart":
+                    # get all scores
+                    scores = []
+                    confs = []
+                    for result in all_results.values():
+                        if result and result[0] == "dart":
+                            scores.append(result[1]["score"])
+                            confs.append(result[1]["conf"])
+                    # check if there is a majority score
+                    max_score, count = self.majority(scores)
+                    if count > len(scores) / 2:
+                        print(f"DART {max_score}")
+                    else:
+                        # get max conf score
+                        print(f"DART {scores[confs.index(max(confs))]}")
+                elif cls == "none" and prev_cls != "none":
+                    print("NONE")
 
                 # reset results
                 all_results = dict.fromkeys(dartboard_db.cams, None)
+                for cam_id in dartboard_db.cams:
+                    key = f"cam_{cam_id}_ResultPublisher"
+                    # delete key from redis
+                    result = r.set(key, "")
+                receive_time = 0
+                prev_cls = cls
             else:
                 sleep(0.1)
 

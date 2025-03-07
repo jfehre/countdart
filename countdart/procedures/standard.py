@@ -159,10 +159,12 @@ class StandardProcedure(BaseProcedure):
             fps_calculator()
             # update segmentor
             if time.time() - segmentor_last_update < segmentor_delay:
+                publisher(cls)
                 motion.reset(frame)
                 segmentor.reset(frame)
 
         # task was aborted so shutdown gracefully
+        publisher("off")
         cam.teardown()
 
 
