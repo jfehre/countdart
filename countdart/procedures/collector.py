@@ -37,15 +37,15 @@ class MainCollector(AbortableTask):
         return all(x == items[0] for x in items)
 
     @staticmethod
-    def majority(items: List[str]) -> Tuple[str, int]:
+    def majority(items: List[str]) -> Tuple[str, List[int]]:
         """Return value with most occurence in given list
-        Returns the value as well as the number of occurence
+        Returns the value as well as indices of all occurence
 
         Args:
             items (List[str]): list of strings
 
         Returns:
-            Tuple[str, int]: value with most occurence and its count
+            Tuple[str, List[int]]: value with most occurence and its count
         """
         max_count = -1
         value = ""
@@ -54,7 +54,7 @@ class MainCollector(AbortableTask):
             if count > max_count:
                 max_count = count
                 value = x
-        return value, max_count
+        return value, [i for i, x in enumerate(items) if x == value]
 
     def run(self, dartboard_db: schemas.Dartboard):
         """start image processing to detect darts."""
@@ -62,6 +62,8 @@ class MainCollector(AbortableTask):
         dartboard_db = schemas.Dartboard(**dartboard_db)
 
         r = redis.Redis(host=settings.REDIS_HOST, port=settings.REDIS_PORT)
+        # key where results are published
+        result_key = f"dartboard_{dartboard_db.id}_result"
 
         # create result key
         all_results = dict.fromkeys(dartboard_db.cams, None)
@@ -93,7 +95,7 @@ class MainCollector(AbortableTask):
                 # get majority class
                 cls, _ = self.majority([x[0] for x in all_results.values() if x])
                 if cls == "hand" and prev_cls != "hand":
-                    print("HAND")
+                    r.set(result_key, json.dumps(["hand"]))
                 elif cls == "dart":
                     # get all scores
                     scores = []
@@ -103,14 +105,20 @@ class MainCollector(AbortableTask):
                             scores.append(result[1]["score"])
                             confs.append(result[1]["conf"])
                     # check if there is a majority score
-                    max_score, count = self.majority(scores)
-                    if count > len(scores) / 2:
-                        print(f"DART {max_score}")
+                    _, indices = self.majority(scores)
+                    if len(indices) > len(scores) / 2:
+                        r.set(
+                            result_key,
+                            json.dumps(all_results[dartboard_db.cams[indices[0]]]),
+                        )
                     else:
                         # get max conf score
-                        print(f"DART {scores[confs.index(max(confs))]}")
+                        best_result = all_results[
+                            dartboard_db.cams[indices[confs.index(max(confs))]]
+                        ]
+                        r.set(result_key, json.dumps(best_result))
                 elif cls == "none" and prev_cls != "none":
-                    print("NONE")
+                    r.set(result_key, json.dumps(["none"]))
 
                 # reset results
                 all_results = dict.fromkeys(dartboard_db.cams, None)

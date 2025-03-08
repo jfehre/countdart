@@ -15,7 +15,9 @@ collection = database["Dartboards"]
 
 
 def get_dartboards(
-    id_list: List[schemas.IdString] = None, cam: schemas.IdString = None
+    id_list: List[schemas.IdString] = None,
+    cam: schemas.IdString = None,
+    active: bool = None,
 ) -> List[schemas.Dartboard]:
     """Retrieve all dartboards from database.
 
@@ -34,6 +36,8 @@ def get_dartboards(
         }
     if cam:
         _filter["cams"] = cam
+    if active:
+        _filter["active"] = active
     result = collection.find(_filter)
     return [schemas.Dartboard(**r) for r in result]
 

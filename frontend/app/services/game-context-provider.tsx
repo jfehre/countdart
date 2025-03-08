@@ -5,13 +5,11 @@ import React, {
     useEffect,
     useState,
 } from "react";
-
-const ws = new WebSocket(
-    "ws://localhost:7878/api/v1/cams/ws/67c747899ec039fb291e8b15/live",
-);
+import { type CamDetectionSchema } from "../types/schemas";
 
 export interface GameContextType {
-    isReady: boolean;
+    currentCls: string;
+    currentResult: string;
 }
 
 export const GameContext = createContext<GameContextType | undefined>(
@@ -22,23 +20,40 @@ export interface GameContextProviderProps {
     children: ReactElement;
 }
 
+export interface GameContextMessage {
+    message_type: string;
+    payload: string;
+}
+
 export function GameContextProvider({
     children,
 }: GameContextProviderProps): ReactElement {
-    const [isReady, setIsReady] = useState(false);
+    const [currentCls, setCurrentCls] = useState("none");
+    const [currentResult, setCurrentResult] = useState("");
 
     useEffect(() => {
+        const ws = new WebSocket("ws://localhost:7878/api/v1/game/ws");
         ws.onmessage = (event) => {
-            const message: string = event.data;
-            if (message === "undefined") {
-                console.log("undef");
-            } else if (message.startsWith("[")) {
-                setIsReady(true);
-                console.log(message);
-            } else if (message.startsWith("/")) {
-                console.log("image ");
-            } else {
-                console.log("else " + message);
+            try {
+                const rawMessage: string = event.data;
+                const message: GameContextMessage = JSON.parse(rawMessage);
+                if (message.message_type === "result") {
+                    const payload: CamDetectionSchema = JSON.parse(
+                        message.payload,
+                    );
+                    const cls = payload[0];
+                    setCurrentCls(cls);
+                    console.log(payload[1]);
+                    if (cls === "dart" && payload[1] !== undefined) {
+                        console.log("setting result");
+                        setCurrentResult(payload[1].score);
+                    }
+                    console.log(currentResult);
+                } else {
+                    console.log("Unknown message type");
+                }
+            } catch (error: any) {
+                console.error(error.message);
             }
         };
 
@@ -48,7 +63,7 @@ export function GameContextProvider({
     }, []);
 
     return (
-        <GameContext.Provider value={{ isReady }}>
+        <GameContext.Provider value={{ currentCls, currentResult }}>
             {children}
         </GameContext.Provider>
     );

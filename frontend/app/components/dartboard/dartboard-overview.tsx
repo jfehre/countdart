@@ -24,6 +24,7 @@ export function DartboardOverview({
     setDartboard,
 }: DartboardOverviewProps): ReactElement {
     const [isActive, setIsActive] = useState(dartboard?.active ?? false);
+    console.log(isActive);
 
     return (
         <Stack p="lg" gap="md">
