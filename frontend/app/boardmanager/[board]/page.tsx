@@ -19,10 +19,12 @@ export default function Page({
 }): ReactElement {
     // retrieve dartboard
     const [dartboard, setDartboard] = useState<DartboardSchema>();
+    const [isActive, setIsActive] = useState<boolean>(false);
     useEffect(() => {
         getDartboard(params.board)
             .then((response) => {
                 setDartboard(response.data);
+                setIsActive(response.data.active);
             })
             .catch((error) => {
                 notifications.show({
@@ -57,10 +59,13 @@ export default function Page({
                 </Tabs.List>
 
                 <Tabs.Panel value="overview">
-                    <DartboardOverview
-                        dartboard={dartboard}
-                        setDartboard={setDartboard}
-                    ></DartboardOverview>
+                    {dartboard !== undefined && (
+                        <DartboardOverview
+                            dartboard={dartboard}
+                            isActive={isActive}
+                            setIsActive={setIsActive}
+                        ></DartboardOverview>
+                    )}
                 </Tabs.Panel>
                 <Tabs.Panel value="cameras">
                     <CameraOverview

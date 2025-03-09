@@ -1,6 +1,6 @@
-import React, { useState, type ReactElement } from "react";
+import React, { type ReactElement } from "react";
 
-import { Group, Stack } from "@mantine/core";
+import { Group, Stack, Badge } from "@mantine/core";
 import { type DartboardSchema } from "@/app/types/schemas";
 import { StartStopButton } from "./start-stop-button";
 import { GameContextProvider } from "@/app/services/game-context-provider";
@@ -10,8 +10,9 @@ import { DartboardGameStatus } from "./dartboard-game-status";
  * Properties for DartboardOverview
  */
 export interface DartboardOverviewProps {
-    dartboard: DartboardSchema | undefined;
-    setDartboard: (dartboard: DartboardSchema) => void;
+    dartboard: DartboardSchema;
+    isActive: boolean;
+    setIsActive: (isActive: boolean) => void;
 }
 
 /**
@@ -21,23 +22,27 @@ export interface DartboardOverviewProps {
  */
 export function DartboardOverview({
     dartboard,
-    setDartboard,
+    isActive,
+    setIsActive,
 }: DartboardOverviewProps): ReactElement {
-    const [isActive, setIsActive] = useState(dartboard?.active ?? false);
-    console.log(isActive);
-
     return (
-        <Stack p="lg" gap="md">
-            <Group>
-                <StartStopButton
-                    dartboard={dartboard}
-                    isActive={isActive}
-                    setIsActive={setIsActive}
-                ></StartStopButton>
-            </Group>
-            <GameContextProvider>
+        <GameContextProvider>
+            <Stack p="lg" gap="md">
+                <Group justify="space-between">
+                    <StartStopButton
+                        dartboard={dartboard}
+                        isActive={isActive}
+                        setIsActive={setIsActive}
+                    ></StartStopButton>
+                    <Group>
+                        <Badge color={isActive ? "green" : "red"}>
+                            {isActive ? "active" : "inactive"}
+                        </Badge>
+                        <Badge>{dartboard.cams.length} Cams</Badge>
+                    </Group>
+                </Group>
                 <DartboardGameStatus></DartboardGameStatus>
-            </GameContextProvider>
-        </Stack>
+            </Stack>
+        </GameContextProvider>
     );
 }

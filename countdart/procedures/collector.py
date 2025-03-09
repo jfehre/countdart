@@ -51,6 +51,8 @@ class MainCollector(AbortableTask):
         max_count = -1
         value = ""
         for x in items:
+            if not x:
+                continue
             count = items.count(x)
             if count > max_count:
                 max_count = count
@@ -95,8 +97,8 @@ class MainCollector(AbortableTask):
                     receive_time = time.time()
 
             # conditions for result publishing
-            all_results_unpublished = not any(
-                [x for x in result_publish_status.values()]
+            all_results_unpublished = all(
+                [not x for x in result_publish_status.values()]
             )
             wait_timout = receive_time != 0 and time.time() - receive_time > timout_sec
 
@@ -110,10 +112,12 @@ class MainCollector(AbortableTask):
                 elif majority_cls == "dart":
                     # get all scores and also use majority
                     scores = [
-                        x.content.score for x in all_results.values() if x.content
+                        x.content.score if x.content else None
+                        for x in all_results.values()
                     ]
                     confs = [
-                        x.content.confidence for x in all_results.values() if x.content
+                        x.content.confidence if x.content else None
+                        for x in all_results.values()
                     ]
                     # check if there is a majority score
                     _, indices = self.majority(scores)
@@ -133,9 +137,14 @@ class MainCollector(AbortableTask):
                 elif majority_cls == "none":
                     r.set(result_key, ResultMessage(cls="none").model_dump_json())
 
+                # Update publish status
+                result_publish_status = dict.fromkeys(dartboard_db.cams, True)
+
                 receive_time = 0
             else:
                 sleep(0.1)
+        # Shutdown gracefully
+        r.set(result_key, ResultMessage(cls="off").model_dump_json())
 
     def __call__(self, *args, **kwargs):
         """will call run"""
