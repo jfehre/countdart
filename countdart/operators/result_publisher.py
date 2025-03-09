@@ -1,7 +1,6 @@
 """ Operator to publish results in redis"""
-import json
-from typing import Any, Dict
 
+from countdart.database.schemas import DartThrowBase, ResultMessage
 from countdart.operators.operator import OPERATORS, BaseOperator
 
 __all__ = "ResultPublisher"
@@ -17,7 +16,7 @@ class ResultPublisher(BaseOperator):
         if self._r:
             self._r.delete(f"{self._r_key}_{self.__class__.__name__}")
 
-    def send_result_to_redis(self, data: Any):
+    def send_result_to_redis(self, data: ResultMessage):
         """Overwrite send to redis, because we want a list
         to push and pop results for collector procedure
 
@@ -28,11 +27,11 @@ class ResultPublisher(BaseOperator):
 
         """
         if self._r:
-            data = json.dumps(data)
             redis_result_key = f"{self._r_key}_{self.__class__.__name__}"
-            self._r.set(redis_result_key, data)
+            self._r.set(redis_result_key, data.model_dump_json())
             # self._r.lpush(redis_result_key, data)
 
-    def call(self, detection: str, data: Dict = None, **kwargs):
+    def call(self, detection: str, data: DartThrowBase = None, **kwargs):
         """Call when new result was received"""
-        return detection, data
+        message = ResultMessage(cls=detection, content=data)
+        return message

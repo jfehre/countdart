@@ -1,5 +1,9 @@
 import { getCamFps } from "@/app/services/api";
-import { type CamDetectionSchema, type CamSchema } from "@/app/types/schemas";
+import {
+    type AllMessage,
+    type ResultMessage,
+    type CamSchema,
+} from "@/app/types/schemas";
 import {
     ActionIcon,
     ActionIconGroup,
@@ -36,8 +40,11 @@ export function WebSocketStream({
     // base64 image
     const [image, setImage] = useState("/images/no_image.webp");
     // cam detection result
-    const [camDetectionResult, setCamDetectionResult] =
-        useState<CamDetectionSchema>(["off", undefined]);
+    const [camResultMessage, setCamResultMessage] = useState<ResultMessage>({
+        type: "result",
+        cls: "off",
+        content: undefined,
+    });
     // height of image, will be changed on toggle fullscreen
     const [heightState, setHeightState] = useState<number | string>(height);
     // current fps
@@ -119,22 +126,37 @@ export function WebSocketStream({
         ws.current = new WebSocket(url);
 
         ws.current.onmessage = (e) => {
-            const b64String: string = e.data;
-            // check if undefinded
-            if (b64String === "undefined") {
-                setImage("/images/no_image.webp");
-                console.log("undef");
-            } else if (b64String.startsWith("[")) {
-                try {
-                    const json: CamDetectionSchema = JSON.parse(b64String);
-                    setCamDetectionResult(json);
-                } catch (error: any) {
-                    console.log("Error parsing json: " + error.message);
+            const rawMessage: string = e.data;
+            try {
+                const message: AllMessage = JSON.parse(rawMessage);
+                // check if undefinded
+                if (message.type === "image") {
+                    setImage("data: image:jpeg;base64, " + message.content);
+                } else if (message.type === "result") {
+                    setCamResultMessage(message as ResultMessage);
+                } else if (message.type === "error") {
+                    notifications.show({
+                        title: "Error",
+                        message: message.content,
+                        color: "red",
+                    });
+                } else {
+                    notifications.show({
+                        title: "Error",
+                        message:
+                            "received unknown message. Type: " +
+                            message.type +
+                            " Content: " +
+                            message.content,
+                        color: "red",
+                    });
                 }
-            } else if (b64String.startsWith("/")) {
-                setImage("data: image:jpeg;base64, " + b64String);
-            } else {
-                console.log("else " + b64String);
+            } catch (error: any) {
+                notifications.show({
+                    title: "Error",
+                    message: "Could not parse raw message: " + rawMessage,
+                    color: "red",
+                });
             }
             // update fps
             getCamFpsFunc();
@@ -167,6 +189,7 @@ export function WebSocketStream({
                     src={image}
                     alt={"Live feed"}
                     fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     style={{ objectFit: "contain" }}
                 />
 
@@ -270,19 +293,19 @@ export function WebSocketStream({
                 <Group pos={"absolute"} bottom={0} left={0} gap={"xs"}>
                     <Badge
                         color={
-                            camDetectionResult?.[0] === "off"
+                            camResultMessage.cls === "off"
                                 ? "gray"
                                 : theme.primaryColor
                         }
                     >
                         FPS: {fps?.toFixed(0)}
                     </Badge>
-                    <Badge color={getBadgeColor(camDetectionResult?.[0])}>
-                        {camDetectionResult?.[0]}
+                    <Badge color={getBadgeColor(camResultMessage.cls)}>
+                        {camResultMessage.cls}
                     </Badge>
                     {/* hide score if undefined */}
-                    {camDetectionResult?.[1]?.score !== undefined && (
-                        <Badge>{camDetectionResult?.[1]?.score}</Badge>
+                    {camResultMessage.content?.score !== undefined && (
+                        <Badge>{camResultMessage.content.score}</Badge>
                     )}
                 </Group>
             </div>

@@ -38,10 +38,12 @@ from .config import (  # noqa: F401
     IntConfigModel,
     SelectConfigModel,
 )
+from .dart_throw import DartThrow, DartThrowBase  # noqa: F401
 from .dartboard import (  # noqa: F401
     Dartboard,
     DartboardBase,
     DartboardCreate,
     DartboardPatch,
 )
+from .messages import BaseMessage, ResultMessage  # noqa: F401
 from .task import TaskOut  # noqa: F401

@@ -55,13 +55,11 @@ export interface CamHardwareSchema {
     source: number;
 }
 
-export interface CamDetectionResultSchema {
+export interface DartThrowSchema {
     score: string;
-    conf: number;
+    confidence: number;
     point: [number, number];
 }
-
-export type CamDetectionSchema = [string, CamDetectionResultSchema | undefined];
 
 export interface NumberConfigSchema {
     name: string;
@@ -94,3 +92,30 @@ export type AllConfigSchema =
     | SelectConfigSchema
     | BooleanConfigSchema
     | NumberConfigSchema;
+
+export interface BaseMessage {
+    type: string;
+    content: any | undefined;
+}
+
+export interface ResultMessage extends BaseMessage {
+    type: "result";
+    cls: string;
+    content: DartThrowSchema | undefined;
+}
+
+export interface ImageMessage extends BaseMessage {
+    type: "image";
+    content: string;
+}
+
+export interface ErrorMessage extends BaseMessage {
+    type: "error";
+    content: string;
+}
+
+export type AllMessage =
+    | ResultMessage
+    | ErrorMessage
+    | ImageMessage
+    | BaseMessage;

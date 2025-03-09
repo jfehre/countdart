@@ -5,7 +5,8 @@ import React, {
     useEffect,
     useState,
 } from "react";
-import { type CamDetectionSchema } from "../types/schemas";
+import { type AllMessage, type ResultMessage } from "../types/schemas";
+import { notifications } from "@mantine/notifications";
 
 export interface GameContextType {
     currentCls: string;
@@ -34,26 +35,38 @@ export function GameContextProvider({
     useEffect(() => {
         const ws = new WebSocket("ws://localhost:7878/api/v1/game/ws");
         ws.onmessage = (event) => {
+            const rawMessage: string = event.data;
             try {
-                const rawMessage: string = event.data;
-                const message: GameContextMessage = JSON.parse(rawMessage);
-                if (message.message_type === "result") {
-                    const payload: CamDetectionSchema = JSON.parse(
-                        message.payload,
-                    );
-                    const cls = payload[0];
-                    setCurrentCls(cls);
-                    console.log(payload[1]);
-                    if (cls === "dart" && payload[1] !== undefined) {
-                        console.log("setting result");
-                        setCurrentResult(payload[1].score);
+                const message: AllMessage = JSON.parse(rawMessage);
+                // check if undefinded
+                if (message.type === "result") {
+                    const resultMessage = message as ResultMessage;
+                    setCurrentCls(resultMessage.cls);
+                    if (
+                        resultMessage.cls === "dart" &&
+                        resultMessage.content !== undefined
+                    ) {
+                        setCurrentResult(resultMessage.content.score);
                     }
-                    console.log(currentResult);
+                } else if (message.type === "error") {
+                    notifications.show({
+                        title: "Error",
+                        message: message.content,
+                        color: "red",
+                    });
                 } else {
-                    console.log("Unknown message type");
+                    notifications.show({
+                        title: "Error",
+                        message: "received unknown message: " + rawMessage,
+                        color: "red",
+                    });
                 }
             } catch (error: any) {
-                console.error(error.message);
+                notifications.show({
+                    title: "Error",
+                    message: "Could not parse message: " + rawMessage,
+                    color: "red",
+                });
             }
         };
 

@@ -4,7 +4,7 @@
 import json
 import time
 from time import sleep
-from typing import List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import redis
 from celery.contrib.abortable import AbortableTask
@@ -12,6 +12,7 @@ from celery.utils.log import get_task_logger
 
 from countdart.celery_app import celery_app
 from countdart.database import schemas
+from countdart.database.schemas import ResultMessage
 from countdart.settings import settings
 
 logger = get_task_logger(__name__)
@@ -66,68 +67,73 @@ class MainCollector(AbortableTask):
         result_key = f"dartboard_{dartboard_db.id}_result"
 
         # create result key
+        # The result is a dict for each cam with the result and if it was published
+        all_results: Dict[str, Optional[ResultMessage]]
         all_results = dict.fromkeys(dartboard_db.cams, None)
+        result_publish_status = dict.fromkeys(dartboard_db.cams, True)
+        prev_results = dict.fromkeys(dartboard_db.cams, None)
 
-        # delete redis list and old results
+        # delete redis list and init prev_result
+        # prev results contains tuple of result and if it was published
         for cam_id in dartboard_db.cams:
-            key = f"cam_{cam_id}_ResultPublisher"
-            r.delete(key)
+            r.delete(f"cam_{cam_id}_ResultPublisher")
 
+        # timeout variables to retrieve results from all cams
         receive_time = 0
         timout_sec = 1
-        prev_cls = "none"
 
         # endless loop. Needs to be canceled by celery
         while not self.is_aborted():
-            # check for result
+            # check for new result
             for cam_id in dartboard_db.cams:
-                key = f"cam_{cam_id}_ResultPublisher"
-                result = r.get(key)
-                if result and result != "":
-                    all_results[cam_id] = json.loads(result)
+                result = r.get(f"cam_{cam_id}_ResultPublisher")
+                result = ResultMessage(**json.loads(result)) if result else None
+                if result and result != prev_results[cam_id]:
+                    all_results[cam_id] = result
+                    prev_results[cam_id] = result
+                    result_publish_status[cam_id] = False
                     receive_time = time.time()
 
             # conditions for result publishing
-            completed = None not in all_results.values()
-            timout = receive_time != 0 and time.time() - receive_time > timout_sec
+            all_results_unpublished = not any(
+                [x for x in result_publish_status.values()]
+            )
+            wait_timout = receive_time != 0 and time.time() - receive_time > timout_sec
 
-            if completed or timout:
+            if all_results_unpublished or wait_timout:
                 # get majority class
-                cls, _ = self.majority([x[0] for x in all_results.values() if x])
-                if cls == "hand" and prev_cls != "hand":
-                    r.set(result_key, json.dumps(["hand"]))
-                elif cls == "dart":
-                    # get all scores
-                    scores = []
-                    confs = []
-                    for result in all_results.values():
-                        if result and result[0] == "dart":
-                            scores.append(result[1]["score"])
-                            confs.append(result[1]["conf"])
+                majority_cls, _ = self.majority(
+                    [x.cls for x in all_results.values() if x]
+                )
+                if majority_cls == "hand":
+                    r.set(result_key, ResultMessage(cls="hand").model_dump_json())
+                elif majority_cls == "dart":
+                    # get all scores and also use majority
+                    scores = [
+                        x.content.score for x in all_results.values() if x.content
+                    ]
+                    confs = [
+                        x.content.confidence for x in all_results.values() if x.content
+                    ]
                     # check if there is a majority score
                     _, indices = self.majority(scores)
                     if len(indices) > len(scores) / 2:
                         r.set(
                             result_key,
-                            json.dumps(all_results[dartboard_db.cams[indices[0]]]),
+                            all_results[
+                                dartboard_db.cams[indices[0]]
+                            ].model_dump_json(),
                         )
                     else:
                         # get max conf score
                         best_result = all_results[
                             dartboard_db.cams[indices[confs.index(max(confs))]]
                         ]
-                        r.set(result_key, json.dumps(best_result))
-                elif cls == "none" and prev_cls != "none":
-                    r.set(result_key, json.dumps(["none"]))
+                        r.set(result_key, best_result.model_dump_json())
+                elif majority_cls == "none":
+                    r.set(result_key, ResultMessage(cls="none").model_dump_json())
 
-                # reset results
-                all_results = dict.fromkeys(dartboard_db.cams, None)
-                for cam_id in dartboard_db.cams:
-                    key = f"cam_{cam_id}_ResultPublisher"
-                    # delete key from redis
-                    result = r.set(key, "")
                 receive_time = 0
-                prev_cls = cls
             else:
                 sleep(0.1)
 

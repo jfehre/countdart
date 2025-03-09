@@ -10,6 +10,7 @@ from pydantic import TypeAdapter
 from countdart.celery_app import celery_app
 from countdart.database import schemas
 from countdart.database.schemas.config import AllConfigModel
+from countdart.database.schemas.dart_throw import DartThrowBase
 from countdart.operators import (
     BBoxDetector,
     DartSegmentor,
@@ -145,7 +146,8 @@ class StandardProcedure(BaseProcedure):
                     score, conf = scorer(dartboard_pt, dartboard_pt_conf)
                     visualizer(frame, bbox_full, cls, line, score, conf, img_tip)
                     publisher(
-                        cls, {"score": score, "conf": conf, "point": dartboard_pt}
+                        cls,
+                        DartThrowBase(score=score, confidence=conf, point=dartboard_pt),
                     )
                 # reset segmentor
                 motion.reset(frame)

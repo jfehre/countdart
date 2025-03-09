@@ -32,11 +32,11 @@ async def game_context_endpoint(websocket: WebSocket):
     while len(dartboard) != 1:
         if len(dartboard) > 1:
             message = json.dumps(
-                {"message_type": "error", "payload": "Multiple active dartboards found"}
+                {"type": "error", "content": "Multiple active dartboards found"}
             )
         else:
             message = json.dumps(
-                {"message_type": "error", "payload": "No active dartboard found"}
+                {"type": "error", "content": "No active dartboard found"}
             )
         if message != old_msg:
             await websocket.send_text(message)
@@ -63,9 +63,7 @@ async def game_context_endpoint(websocket: WebSocket):
             msg = r.get(result_key)
             if msg and msg != old_msg:
                 old_msg = msg
-                await websocket.send_text(
-                    json.dumps({"message_type": "result", "payload": msg.decode()})
-                )
+                await websocket.send_text(msg.decode())
                 continue
             await asyncio.sleep(0.1)
 

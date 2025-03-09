@@ -76,7 +76,7 @@ async def websocket_endpoint(cam_id: schemas.IdString, websocket: WebSocket):
             result = r.get(f"cam_{cam_id}_ResultPublisher")
             if result and result != "" and result != old_result:
                 old_result = result
-                await websocket.send_text(json.dumps(json.loads(result)))
+                await websocket.send_text(result.decode())
 
             # Get Frame from redis
             encoded = r.get(f"cam_{cam_id}_{operator}")
@@ -89,7 +89,9 @@ async def websocket_endpoint(cam_id: schemas.IdString, websocket: WebSocket):
             try:
                 frame = decode_numpy(encoded_array)
             except TypeError:
-                await websocket.send_text("undefined")
+                await websocket.send_text(
+                    json.dumps({"type": "error", "content": "could not encode image"})
+                )
                 continue
             # squeeze array for 2d images
             frame = np.squeeze(frame)
@@ -99,7 +101,9 @@ async def websocket_endpoint(cam_id: schemas.IdString, websocket: WebSocket):
                 im_bytes = buf.getvalue()
                 base64_str = base64.b64encode(im_bytes).decode("utf-8")
             # send with websocket
-            await websocket.send_text(base64_str)
+            await websocket.send_text(
+                json.dumps({"type": "image", "content": base64_str})
+            )
     except WebSocketDisconnect:
         pass
 
